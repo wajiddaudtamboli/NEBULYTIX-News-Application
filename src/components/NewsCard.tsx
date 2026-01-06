@@ -1,18 +1,23 @@
 import { useState, useRef } from 'react'
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
-import { Bookmark, BookmarkCheck, ExternalLink, Clock, Sparkles } from 'lucide-react'
+import { Bookmark, BookmarkCheck, ExternalLink, Clock, Sparkles, Eye } from 'lucide-react'
 import { Button } from './ui/button'
 import { MediaFrame } from './MediaFrame'
 
 export interface NewsItem {
+  _id?: string
   id: string
   title: string
-  description: string
-  imageUrl: string
+  description?: string
+  summary?: string
+  imageUrl?: string
+  coverImage?: string
   source: string
   publishedAt: string
-  url: string
+  url?: string
   category: string
+  views?: number
+  isTrending?: boolean
 }
 
 interface NewsCardProps {
@@ -27,6 +32,12 @@ export function NewsCard({ news, index, onSave, isSaved = false, featured = fals
   const [saved, setSaved] = useState(isSaved)
   const [showSaveConfirm, setShowSaveConfirm] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
+
+  // Normalize the data structure
+  const imageUrl = news.coverImage || news.imageUrl || ''
+  const description = news.summary || news.description || ''
+  const articleId = news._id || news.id
+  const articleUrl = news.url || `/article/${articleId}`
 
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
@@ -48,10 +59,12 @@ export function NewsCard({ news, index, onSave, isSaved = false, featured = fals
     mouseY.set(0)
   }
 
-  const handleSave = () => {
+  const handleSave = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
     const newSavedState = !saved
     setSaved(newSavedState)
-    onSave?.(news.id)
+    onSave?.(articleId)
     
     if (newSavedState) {
       setShowSaveConfirm(true)
@@ -101,7 +114,7 @@ export function NewsCard({ news, index, onSave, isSaved = false, featured = fals
       {/* Image section */}
       <div className={`relative overflow-hidden ${featured ? 'aspect-[16/10]' : 'aspect-video'}`}>
         <MediaFrame
-          src={news.imageUrl}
+          src={imageUrl}
           alt={news.title}
         />
         
@@ -117,6 +130,19 @@ export function NewsCard({ news, index, onSave, isSaved = false, featured = fals
             {news.category}
           </span>
         </motion.div>
+
+        {/* Trending badge */}
+        {news.isTrending && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute top-4 left-32 z-10"
+          >
+            <span className="px-2 py-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-medium flex items-center gap-1">
+              🔥 Trending
+            </span>
+          </motion.div>
+        )}
 
         {/* Save button with feedback */}
         <motion.button
@@ -175,6 +201,15 @@ export function NewsCard({ news, index, onSave, isSaved = false, featured = fals
             <Clock className="h-3 w-3" />
             {formatDate(news.publishedAt)}
           </span>
+          {news.views !== undefined && news.views > 0 && (
+            <>
+              <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <Eye className="h-3 w-3" />
+                {news.views.toLocaleString()}
+              </span>
+            </>
+          )}
         </div>
 
         {/* Title with proper hierarchy */}
@@ -188,12 +223,12 @@ export function NewsCard({ news, index, onSave, isSaved = false, featured = fals
 
         {/* Description */}
         <p className={`text-muted-foreground mb-4 ${featured ? 'line-clamp-3 text-base' : 'line-clamp-2 text-sm'}`}>
-          {news.description}
+          {description}
         </p>
 
         {/* CTA Button with depth */}
         <a 
-          href={news.url} 
+          href={articleUrl} 
           target="_blank" 
           rel="noopener noreferrer"
           className="inline-block"

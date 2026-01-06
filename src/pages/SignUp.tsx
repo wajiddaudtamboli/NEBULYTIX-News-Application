@@ -1,9 +1,9 @@
-import { SignIn, useUser } from '@clerk/clerk-react'
+import { SignUp, useUser } from '@clerk/clerk-react'
 import { useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 
-export default function Login() {
+export default function SignUp() {
   const { isSignedIn } = useUser()
   const navigate = useNavigate()
 
@@ -26,10 +26,10 @@ export default function Login() {
         transition={{ duration: 0.6, ease: 'easeOut' }}
         className="relative w-full max-w-md"
       >
-        <SignIn 
+        <SignUp 
           routing="path"
-          path="/login"
-          signUpUrl="/signup"
+          path="/signup"
+          signInUrl="/login"
           appearance={{
             elements: {
               rootBox: 'w-full',

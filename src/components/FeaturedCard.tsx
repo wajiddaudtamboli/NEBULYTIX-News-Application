@@ -15,10 +15,19 @@ export function FeaturedCard({ news, onSave, isSaved = false }: FeaturedCardProp
   const [saved, setSaved] = useState(isSaved)
   const [showConfirm, setShowConfirm] = useState(false)
 
-  const handleSave = () => {
+  // Normalize the data structure
+  const imageUrl = news.coverImage || news.imageUrl || ''
+  const description = news.summary || news.description || ''
+  const articleId = news._id || news.id
+  const articleUrl = news.url || `/article/${articleId}`
+  const views = news.views || 0
+
+  const handleSave = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
     const newState = !saved
     setSaved(newState)
-    onSave?.(news.id)
+    onSave?.(articleId)
     
     if (newState) {
       setShowConfirm(true)
@@ -37,6 +46,12 @@ export function FeaturedCard({ news, onSave, isSaved = false }: FeaturedCardProp
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
+  const formatViews = (count: number) => {
+    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}k`
+    return count.toString()
+  }
+
   return (
     <motion.article
       initial={{ opacity: 0, y: 50, scale: 0.95 }}
@@ -49,7 +64,7 @@ export function FeaturedCard({ news, onSave, isSaved = false }: FeaturedCardProp
         {/* Image side */}
         <div className="relative overflow-hidden">
           <MediaFrame
-            src={news.imageUrl}
+            src={imageUrl}
             alt={news.title}
             className="absolute inset-0"
           />
@@ -79,7 +94,7 @@ export function FeaturedCard({ news, onSave, isSaved = false }: FeaturedCardProp
             className="absolute bottom-6 left-6 z-10 flex items-center gap-2 text-sm text-white/90"
           >
             <Eye className="h-4 w-4" />
-            <span>12.4k views</span>
+            <span>{formatViews(views)} views</span>
           </motion.div>
         </div>
 
@@ -127,7 +142,7 @@ export function FeaturedCard({ news, onSave, isSaved = false }: FeaturedCardProp
             transition={{ delay: 0.45 }}
             className="text-muted-foreground text-base lg:text-lg leading-relaxed mb-6 line-clamp-3"
           >
-            {news.description}
+            {description}
           </motion.p>
 
           {/* Actions */}
@@ -137,7 +152,7 @@ export function FeaturedCard({ news, onSave, isSaved = false }: FeaturedCardProp
             transition={{ delay: 0.5 }}
             className="flex items-center gap-4"
           >
-            <a href={news.url} target="_blank" rel="noopener noreferrer">
+            <a href={articleUrl} target="_blank" rel="noopener noreferrer">
               <Button variant="hero" size="lg" className="gap-2 btn-depth">
                 Read Full Story
                 <ExternalLink className="h-4 w-4" />

@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
-import { Menu, X, Bookmark, Home, LogIn, Sparkles } from 'lucide-react'
+import { Menu, X, Bookmark, Home, LogIn, Sparkles, Settings, LogOut, User } from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
 import { Button } from './ui/button'
 import { Link, useLocation } from 'react-router-dom'
+import { useUser, useClerk } from '@clerk/clerk-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu'
 
 interface NavbarProps {
   theme: 'light' | 'dark'
@@ -15,6 +23,8 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
   const [hidden, setHidden] = useState(false)
   const [lastScrollY, setLastScrollY] = useState(0)
   const location = useLocation()
+  const { isSignedIn, user } = useUser()
+  const { signOut } = useClerk()
   
   const { scrollY } = useScroll()
   const bgOpacity = useTransform(scrollY, [0, 100], [0.7, 0.95])
@@ -130,14 +140,61 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
           <div className="relative flex items-center gap-2 sm:gap-3">
             <ThemeToggle theme={theme} onToggle={onToggleTheme} />
             
-            <Link to="/login" className="hidden md:block">
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button variant="hero" size="sm" className="gap-2 btn-depth">
-                  <LogIn className="h-4 w-4" />
-                  Sign In
-                </Button>
-              </motion.div>
-            </Link>
+            {isSignedIn && user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
+                  >
+                    {user.imageUrl ? (
+                      <img 
+                        src={user.imageUrl} 
+                        alt={user.fullName || 'User'} 
+                        className="h-7 w-7 rounded-full object-cover"
+                      />
+                    ) : (
+                      <User className="h-5 w-5" />
+                    )}
+                    <span className="text-sm font-medium max-w-[100px] truncate">
+                      {user.firstName || user.emailAddresses[0]?.emailAddress?.split('@')[0]}
+                    </span>
+                  </motion.button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <Link to="/saved" className="flex items-center gap-2">
+                      <Bookmark className="h-4 w-4" />
+                      Saved News
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin" className="flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      Admin Panel
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => signOut()}
+                    className="text-red-600 cursor-pointer"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link to="/login" className="hidden md:block">
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button variant="hero" size="sm" className="gap-2 btn-depth">
+                    <LogIn className="h-4 w-4" />
+                    Sign In
+                  </Button>
+                </motion.div>
+              </Link>
+            )}
 
             {/* Mobile menu button */}
             <motion.button

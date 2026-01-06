@@ -1,13 +1,94 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { ArrowLeft, Loader2 } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useUser } from '@clerk/clerk-react'
 import { Button } from '@/components/ui/button'
 import { NewsCard } from '@/components/NewsCard'
 import { EmptyState } from '@/components/EmptyState'
+import { SkeletonCard } from '@/components/SkeletonCard'
+import { fetchSavedArticles, toggleSaveArticle } from '@/lib/api'
+import { toast } from '@/hooks/use-toast'
+
+interface NewsItem {
+  _id: string
+  id: string
+  title: string
+  summary: string
+  category: string
+  source: string
+  publishedAt: string
+  coverImage: string
+  isFeatured: boolean
+  isTrending: boolean
+  views: number
+  tags: string[]
+}
 
 export default function SavedNews() {
-  const [savedNews] = useState<any[]>([])
+  const { user, isLoaded, isSignedIn } = useUser()
+  const navigate = useNavigate()
+  const [savedNews, setSavedNews] = useState<NewsItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      navigate('/login')
+    }
+  }, [isLoaded, isSignedIn, navigate])
+
+  useEffect(() => {
+    if (isSignedIn && user) {
+      loadSavedNews()
+    }
+  }, [isSignedIn, user])
+
+  const loadSavedNews = async () => {
+    if (!user) return
+    setLoading(true)
+    try {
+      const result = await fetchSavedArticles(
+        user.id,
+        user.primaryEmailAddress?.emailAddress || ''
+      )
+      if (result.success) {
+        setSavedNews(result.data.map((n: any) => ({ ...n, id: n._id })))
+      }
+    } catch (error) {
+      console.error('Failed to load saved news:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRemove = async (id: string) => {
+    if (!user) return
+
+    // Optimistic remove
+    setSavedNews(prev => prev.filter(n => n._id !== id && n.id !== id))
+
+    const result = await toggleSaveArticle(
+      user.id,
+      user.primaryEmailAddress?.emailAddress || '',
+      id
+    )
+
+    if (result.success) {
+      toast({ title: 'Article removed from saved' })
+    } else {
+      // Reload on failure
+      loadSavedNews()
+      toast({ title: 'Failed to remove article', variant: 'destructive' })
+    }
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
     <main className="min-h-screen pt-24 pb-12">
@@ -42,7 +123,13 @@ export default function SavedNews() {
         </motion.div>
 
         {/* Content */}
-        {savedNews.length === 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonCard key={i} index={i} />
+            ))}
+          </div>
+        ) : savedNews.length === 0 ? (
           <EmptyState type="no-saved" />
         ) : (
           <motion.div 
@@ -53,10 +140,11 @@ export default function SavedNews() {
           >
             {savedNews.map((news, index) => (
               <NewsCard
-                key={news.id}
+                key={news._id || news.id}
                 news={news}
                 index={index}
                 isSaved
+                onSave={() => handleRemove(news._id || news.id)}
               />
             ))}
           </motion.div>

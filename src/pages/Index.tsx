@@ -1,38 +1,166 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
-import { TrendingUp, Zap, ChevronDown, Sparkles } from 'lucide-react'
+import { TrendingUp, Zap, ChevronDown, Sparkles, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
+import { format, subDays, isToday, isSameDay } from 'date-fns'
+import { useUser } from '@clerk/clerk-react'
 import { NewsGlobe } from '@/components/NewsGlobe'
 import { NewsCard } from '@/components/NewsCard'
 import { FeaturedCard } from '@/components/FeaturedCard'
 import { SkeletonCard } from '@/components/SkeletonCard'
 import { CategoryFilter } from '@/components/CategoryFilter'
 import { EmptyState } from '@/components/EmptyState'
+import { TrendingStrip } from '@/components/TrendingStrip'
 import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { fetchNews, fetchFeaturedNews, fetchTrendingNews, toggleSaveArticle, fetchSavedArticles } from '@/lib/api'
 import { mockNews, categories } from '@/data/mockNews'
+import { toast } from '@/hooks/use-toast'
+
+interface NewsItem {
+  _id: string
+  id: string
+  title: string
+  summary: string
+  category: string
+  source: string
+  publishedAt: string
+  coverImage: string
+  isFeatured: boolean
+  isTrending: boolean
+  views: number
+  tags: string[]
+}
 
 export default function Index() {
+  const { user, isSignedIn } = useUser()
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('All')
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
+  const [news, setNews] = useState<NewsItem[]>([])
+  const [featuredNews, setFeaturedNews] = useState<NewsItem[]>([])
+  const [trendingNews, setTrendingNews] = useState<NewsItem[]>([])
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [useMockData, setUseMockData] = useState(false)
   const newsRef = useRef<HTMLElement>(null)
   
   const { scrollYProgress } = useScroll()
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0])
   const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95])
 
+  // Fetch saved articles on mount
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1200)
-    return () => clearTimeout(timer)
-  }, [])
+    if (isSignedIn && user) {
+      loadSavedArticles()
+    }
+  }, [isSignedIn, user])
 
-  const filteredNews = selectedCategory === 'All'
-    ? mockNews
-    : mockNews.filter(item => item.category === selectedCategory)
+  // Fetch news on category/date change
+  useEffect(() => {
+    loadNews()
+    if (isToday(selectedDate)) {
+      loadFeaturedAndTrending()
+    }
+  }, [selectedCategory, selectedDate])
 
-  const featuredNews = filteredNews[0]
-  const regularNews = filteredNews.slice(1)
+  const loadSavedArticles = async () => {
+    if (!user) return
+    const result = await fetchSavedArticles(user.id, user.primaryEmailAddress?.emailAddress || '')
+    if (result.success) {
+      setSavedIds(new Set(result.data.map((n: NewsItem) => n._id)))
+    }
+  }
 
-  const handleSave = (id: string) => {
+  const loadNews = async () => {
+    setLoading(true)
+    setPage(1)
+    
+    try {
+      const result = await fetchNews({
+        category: selectedCategory,
+        date: isToday(selectedDate) ? undefined : format(selectedDate, 'yyyy-MM-dd'),
+        page: 1,
+        limit: 20,
+      })
+
+      if (result.success && result.data.length > 0) {
+        const mapped = result.data.map(n => ({ ...n, id: n._id }))
+        setNews(mapped)
+        setHasMore(result.pagination ? page < result.pagination.pages : false)
+        setUseMockData(false)
+      } else {
+        // Fallback to mock data
+        const filtered = selectedCategory === 'All' 
+          ? mockNews 
+          : mockNews.filter(n => n.category === selectedCategory)
+        setNews(filtered.map(n => ({ ...n, _id: n.id })) as any)
+        setHasMore(false)
+        setUseMockData(true)
+      }
+    } catch (error) {
+      // Fallback to mock data
+      const filtered = selectedCategory === 'All' 
+        ? mockNews 
+        : mockNews.filter(n => n.category === selectedCategory)
+      setNews(filtered.map(n => ({ ...n, _id: n.id })) as any)
+      setHasMore(false)
+      setUseMockData(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadFeaturedAndTrending = async () => {
+    try {
+      const [featuredResult, trendingResult] = await Promise.all([
+        fetchFeaturedNews(),
+        fetchTrendingNews(),
+      ])
+      
+      if (featuredResult.success) {
+        setFeaturedNews(featuredResult.data.map(n => ({ ...n, id: n._id })))
+      }
+      if (trendingResult.success) {
+        setTrendingNews(trendingResult.data.map(n => ({ ...n, id: n._id })))
+      }
+    } catch {
+      // Use mock featured/trending
+      setFeaturedNews(mockNews.filter(n => n.isFeatured).slice(0, 3) as any)
+      setTrendingNews(mockNews.filter(n => n.isTrending).slice(0, 10) as any)
+    }
+  }
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore || useMockData) return
+    setLoadingMore(true)
+    
+    const nextPage = page + 1
+    const result = await fetchNews({
+      category: selectedCategory,
+      date: isToday(selectedDate) ? undefined : format(selectedDate, 'yyyy-MM-dd'),
+      page: nextPage,
+      limit: 20,
+    })
+
+    if (result.success) {
+      const mapped = result.data.map(n => ({ ...n, id: n._id }))
+      setNews(prev => [...prev, ...mapped])
+      setPage(nextPage)
+      setHasMore(result.pagination ? nextPage < result.pagination.pages : false)
+    }
+    setLoadingMore(false)
+  }
+
+  const handleSave = async (id: string) => {
+    if (!isSignedIn || !user) {
+      toast({ title: 'Please sign in to save articles' })
+      return
+    }
+
+    // Optimistic update
     setSavedIds(prev => {
       const next = new Set(prev)
       if (next.has(id)) {
@@ -42,11 +170,36 @@ export default function Index() {
       }
       return next
     })
+
+    const result = await toggleSaveArticle(
+      user.id,
+      user.primaryEmailAddress?.emailAddress || '',
+      id
+    )
+
+    if (result.success) {
+      toast({ title: result.message || (result.data.isSaved ? 'Article saved' : 'Article removed') })
+    } else {
+      // Revert optimistic update
+      setSavedIds(prev => {
+        const next = new Set(prev)
+        if (next.has(id)) {
+          next.delete(id)
+        } else {
+          next.add(id)
+        }
+        return next
+      })
+    }
   }
 
   const scrollToNews = () => {
     newsRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
+
+  const displayNews = news
+  const primaryFeatured = featuredNews[0] || displayNews[0]
+  const regularNews = featuredNews.length > 0 ? displayNews : displayNews.slice(1)
 
   return (
     <main className="min-h-screen">
@@ -161,9 +314,14 @@ export default function Index() {
         <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-background to-transparent pointer-events-none" />
       </motion.section>
 
+      {/* Trending Strip */}
+      {trendingNews.length > 0 && (
+        <TrendingStrip news={trendingNews} onSave={handleSave} savedIds={savedIds} />
+      )}
+
       {/* News Section */}
       <section ref={newsRef} className="content-container py-16 md:py-24">
-        {/* Section header */}
+        {/* Section header with date picker */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -179,7 +337,7 @@ export default function Index() {
               viewport={{ once: true }}
             >
               <TrendingUp className="h-3 w-3" />
-              Latest Stories
+              {isToday(selectedDate) ? 'Latest Stories' : `News from ${format(selectedDate, 'MMM d, yyyy')}`}
             </motion.div>
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-2">
               Curated For You
@@ -188,12 +346,33 @@ export default function Index() {
               Handpicked news from trusted sources worldwide
             </p>
           </div>
-          
-          <CategoryFilter
-            categories={categories}
-            selected={selectedCategory}
-            onSelect={setSelectedCategory}
-          />
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            {/* Date Picker */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="gap-2 min-w-[180px]">
+                  <CalendarIcon className="h-4 w-4" />
+                  {isToday(selectedDate) ? 'Today' : format(selectedDate, 'MMM d, yyyy')}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  disabled={(date) => date > new Date() || date < subDays(new Date(), 100)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            
+            <CategoryFilter
+              categories={categories}
+              selected={selectedCategory}
+              onSelect={setSelectedCategory}
+            />
+          </div>
         </motion.div>
 
         {/* News grid */}
@@ -204,46 +383,61 @@ export default function Index() {
               <SkeletonCard key={i} index={i + 1} />
             ))}
           </div>
-        ) : filteredNews.length === 0 ? (
+        ) : displayNews.length === 0 ? (
           <EmptyState 
             type="no-results"
-            onRetry={() => setSelectedCategory('All')}
+            onRetry={() => {
+              setSelectedCategory('All')
+              setSelectedDate(new Date())
+            }}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Featured card */}
-            {featuredNews && (
+            {primaryFeatured && (
               <FeaturedCard
-                news={featuredNews}
+                news={primaryFeatured}
                 onSave={handleSave}
-                isSaved={savedIds.has(featuredNews.id)}
+                isSaved={savedIds.has(primaryFeatured._id || primaryFeatured.id)}
               />
             )}
             
             {/* Regular cards */}
-            {regularNews.map((news, index) => (
+            {regularNews.map((item, index) => (
               <NewsCard
-                key={news.id}
-                news={news}
+                key={item._id || item.id}
+                news={item}
                 index={index + 1}
                 onSave={handleSave}
-                isSaved={savedIds.has(news.id)}
+                isSaved={savedIds.has(item._id || item.id)}
               />
             ))}
           </div>
         )}
 
         {/* Load more */}
-        {!loading && filteredNews.length > 0 && (
+        {!loading && displayNews.length > 0 && hasMore && !useMockData && (
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             className="flex justify-center mt-12"
           >
-            <Button variant="outline" size="lg" className="gap-2">
-              Load More Stories
-              <ChevronDown className="h-4 w-4" />
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="gap-2"
+              onClick={loadMore}
+              disabled={loadingMore}
+            >
+              {loadingMore ? (
+                <div className="h-5 w-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+              ) : (
+                <>
+                  Load More Stories
+                  <ChevronDown className="h-4 w-4" />
+                </>
+              )}
             </Button>
           </motion.div>
         )}

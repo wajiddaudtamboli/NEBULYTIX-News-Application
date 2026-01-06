@@ -8,9 +8,17 @@ interface MediaFrameProps {
   className?: string
   onLoad?: () => void
   video?: boolean
+  aspectRatio?: 'video' | 'square' | 'portrait' | 'auto'
 }
 
-export function MediaFrame({ src, alt, className = '', onLoad, video = false }: MediaFrameProps) {
+export function MediaFrame({ 
+  src, 
+  alt, 
+  className = '', 
+  onLoad, 
+  video = false,
+  aspectRatio = 'auto'
+}: MediaFrameProps) {
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState(false)
   const imgRef = useRef<HTMLImageElement>(null)
@@ -25,8 +33,21 @@ export function MediaFrame({ src, alt, className = '', onLoad, video = false }: 
     setLoaded(true)
   }
 
+  // Responsive aspect ratio classes
+  const aspectClasses = {
+    video: 'aspect-video',
+    square: 'aspect-square',
+    portrait: 'aspect-[3/4]',
+    auto: ''
+  }
+
   return (
-    <div className={`relative w-full h-full overflow-hidden bg-muted ${className}`}>
+    <div className={`relative w-full h-full overflow-hidden bg-muted touch-manipulation ${aspectClasses[aspectRatio]} ${className}`}
+      style={{ 
+        WebkitTapHighlightColor: 'transparent',
+        WebkitTouchCallout: 'none'
+      }}
+    >
       {/* Shimmer loader */}
       <AnimatePresence>
         {!loaded && (

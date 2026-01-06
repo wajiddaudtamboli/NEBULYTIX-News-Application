@@ -107,16 +107,29 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
   }
 
   html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-body);
     perspective: 1000px;
+    overflow-x: hidden;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* Mobile viewport fix - no extra space */
+  @supports (height: 100dvh) {
+    body {
+      min-height: 100dvh;
+    }
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -127,6 +140,19 @@
   /* Focus states for accessibility */
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-primary;
+  }
+
+  /* Prevent iOS zoom on inputs */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* Mobile touch optimization */
+  @media (hover: none) and (pointer: coarse) {
+    .card-3d:hover,
+    .card-featured:hover {
+      transform: none !important;
+    }
   }
 }
 
