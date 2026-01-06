@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { 
   BarChart3, 
@@ -7,15 +7,17 @@ import {
   TrendingUp,
   Eye,
   Plus,
-  Settings,
-  Users
+  LogOut,
+  RefreshCw,
+  Loader2
 } from 'lucide-react'
-import { useUser } from '@clerk/clerk-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AdminNewsTable } from '@/components/admin/AdminNewsTable'
 import { CreateNewsModal } from '@/components/admin/CreateNewsModal'
+import { verifyAdminToken, adminGetStats, clearAdminToken, getAdminToken } from '@/lib/api'
+import { toast } from '@/hooks/use-toast'
 
 interface Stats {
   totalNews: number
@@ -25,74 +27,79 @@ interface Stats {
   newsByCategory: Array<{ _id: string; count: number }>
 }
 
+interface AdminData {
+  id: string
+  email: string
+  name: string
+  role: string
+}
+
 export default function AdminDashboard() {
-  const { user, isLoaded } = useUser()
   const navigate = useNavigate()
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const [admin, setAdmin] = useState<AdminData | null>(null)
 
-  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api')
-
+  // Check if admin is authenticated
   useEffect(() => {
-    if (isLoaded && !user) {
-      navigate('/login')
-    }
-  }, [isLoaded, user, navigate])
-
-  useEffect(() => {
-    if (user) {
-      verifyAdmin()
-    }
-  }, [user])
-
-  const verifyAdmin = async () => {
-    try {
-      const res = await fetch(`${apiUrl}/admin/verify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-secret': 'admin123',
-        },
-        body: JSON.stringify({
-          clerkId: user?.id,
-          email: user?.emailAddresses[0]?.emailAddress,
-          name: user?.fullName,
-        }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        setIsAdmin(true)
-        fetchStats()
-      } else {
-        setIsAdmin(false)
-        setLoading(false)
+    const checkAuth = async () => {
+      const token = getAdminToken()
+      
+      if (!token) {
+        navigate('/admin/login')
+        return
       }
-    } catch (error) {
-      console.error('Admin verification failed:', error)
-      setIsAdmin(false)
-      setLoading(false)
-    }
-  }
 
-  const fetchStats = async () => {
+      try {
+        const result = await verifyAdminToken()
+        
+        if (result.success && result.data) {
+          setAdmin(result.data)
+          fetchStats()
+        } else {
+          clearAdminToken()
+          navigate('/admin/login')
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error)
+        clearAdminToken()
+        navigate('/admin/login')
+      }
+    }
+
+    checkAuth()
+  }, [navigate])
+
+  const fetchStats = useCallback(async () => {
     try {
-      const res = await fetch(`${apiUrl}/admin/stats`, {
-        headers: {
-          'x-clerk-id': user?.id || '',
-          'x-admin-role': 'admin',
-        },
-      })
-      const data = await res.json()
-      if (data.success) {
-        setStats(data.data)
+      const result = await adminGetStats()
+      
+      if (result.success && result.data) {
+        setStats(result.data)
       }
     } catch (error) {
       console.error('Failed to fetch stats:', error)
+      toast({
+        title: 'Failed to load stats',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
+  }, [])
+
+  const handleRefresh = () => {
+    setRefreshing(true)
+    fetchStats()
+  }
+
+  const handleLogout = () => {
+    clearAdminToken()
+    toast({ title: 'Logged out successfully' })
+    navigate('/admin/login')
   }
 
   const statCards = [
@@ -116,27 +123,32 @@ export default function AdminDashboard() {
     },
     {
       title: 'Total Views',
-      value: stats?.totalViews.toLocaleString() || '0',
+      value: stats?.totalViews?.toLocaleString() || '0',
       icon: Eye,
       color: 'from-purple-500 to-indigo-500',
     },
   ]
 
-  if (!isLoaded || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
       </div>
     )
   }
 
-  if (!isAdmin) {
+  if (!admin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-muted-foreground mb-4">You don't have admin privileges.</p>
-          <Button onClick={() => navigate('/')}>Go Home</Button>
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold">Access Denied</h1>
+          <p className="text-muted-foreground">Please login to access the admin panel.</p>
+          <Button onClick={() => navigate('/admin/login')}>
+            Go to Login
+          </Button>
         </div>
       </div>
     )
@@ -151,24 +163,43 @@ export default function AdminDashboard() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="font-display text-4xl font-bold mb-2">Admin Dashboard</h1>
-              <p className="text-muted-foreground">Manage news content and analytics</p>
+              <h1 className="font-display text-3xl sm:text-4xl font-bold mb-2">Admin Dashboard</h1>
+              <p className="text-muted-foreground">
+                Welcome back, <span className="text-foreground font-medium">{admin.name}</span>
+              </p>
             </div>
-            <Button 
-              variant="hero" 
-              onClick={() => setShowCreateModal(true)}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add News
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={handleRefresh}
+                disabled={refreshing}
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              </Button>
+              <Button 
+                onClick={() => setShowCreateModal(true)}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add News
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={handleLogout}
+                title="Logout"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </motion.div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           {statCards.map((stat, index) => (
             <motion.div
               key={stat.title}
@@ -176,10 +207,10 @@ export default function AdminDashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card className="glass-panel border-border/50 hover:border-primary/30 transition-colors">
+              <Card className="border-border/50 hover:border-primary/30 transition-all hover:shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.color}`}>
+                    <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.color} shadow-lg`}>
                       <stat.icon className="h-6 w-6 text-white" />
                     </div>
                     <div>
@@ -194,14 +225,14 @@ export default function AdminDashboard() {
         </div>
 
         {/* Category Breakdown */}
-        {stats?.newsByCategory && (
+        {stats?.newsByCategory && stats.newsByCategory.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
             className="mb-8"
           >
-            <Card className="glass-panel border-border/50">
+            <Card className="border-border/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5" />
@@ -213,7 +244,7 @@ export default function AdminDashboard() {
                   {stats.newsByCategory.map((cat) => (
                     <div
                       key={cat._id}
-                      className="p-4 rounded-lg bg-background/50 border border-border/30 text-center"
+                      className="p-4 rounded-lg bg-muted/50 border border-border/30 text-center hover:bg-muted transition-colors"
                     >
                       <p className="font-medium text-sm text-muted-foreground">{cat._id}</p>
                       <p className="text-2xl font-bold">{cat.count}</p>

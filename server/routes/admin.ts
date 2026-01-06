@@ -1,83 +1,70 @@
 import express, { Router, Request, Response } from 'express';
-import News from '../models/News';
-import Admin from '../models/Admin';
-import { authenticateAdmin } from '../middleware/auth';
+import News from '../models/News.js';
+import Admin from '../models/Admin.js';
+import { authenticateAdmin, requirePermission, sanitizeQuery } from '../middleware/auth.js';
 
 const router: Router = express.Router();
 
-// Create or verify admin
-router.post('/verify', async (req: Request, res: Response) => {
-  try {
-    const { clerkId, email, name } = req.body;
-    const adminSecret = req.headers['x-admin-secret'];
+const VALID_CATEGORIES = ['Technology', 'Business', 'Science', 'World', 'Health'];
 
-    // Simple admin verification (in production, use Clerk roles)
-    const isValidAdmin = adminSecret === process.env.ADMIN_SECRET || 
-                         email?.includes('admin@') ||
-                         email === 'wajid@nebulytix.com'; // Default admin
-
-    if (!isValidAdmin) {
-      return res.status(403).json({ error: 'Not authorized as admin' });
-    }
-
-    let admin = await Admin.findOne({ clerkId });
-
-    if (!admin) {
-      admin = new Admin({
-        clerkId,
-        email,
-        name,
-        role: 'admin',
-        permissions: ['create', 'edit', 'delete', 'feature', 'trend'],
-      });
-      await admin.save();
-    }
-
-    res.json({ success: true, data: admin });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to verify admin',
-    });
+// Validate news input
+const validateNewsInput = (data: any) => {
+  const errors: string[] = [];
+  
+  if (!data.title || typeof data.title !== 'string' || data.title.trim().length < 5) {
+    errors.push('Title must be at least 5 characters');
   }
-});
+  if (!data.summary || typeof data.summary !== 'string' || data.summary.trim().length < 20) {
+    errors.push('Summary must be at least 20 characters');
+  }
+  if (!data.category || !VALID_CATEGORIES.includes(data.category)) {
+    errors.push(`Category must be one of: ${VALID_CATEGORIES.join(', ')}`);
+  }
+  if (!data.coverImage || typeof data.coverImage !== 'string') {
+    errors.push('Cover image URL is required');
+  }
+  
+  return errors;
+};
 
 // Create news
 router.post('/news/create', authenticateAdmin, async (req: Request, res: Response) => {
   try {
-    const {
-      title,
-      summary,
-      category,
-      source,
-      coverImage,
-      isFeatured,
-      isTrending,
-      tags,
-    } = req.body;
+    const { title, summary, category, source, coverImage, isFeatured, isTrending, tags } = req.body;
 
-    if (!title || !summary || !category || !coverImage) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    const errors = validateNewsInput(req.body);
+    if (errors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors,
+      });
     }
 
     const news = new News({
-      title,
-      summary,
+      title: title.trim(),
+      summary: summary.trim(),
       category,
-      source: source || 'Nebulytix',
-      coverImage,
-      isFeatured: !!isFeatured,
-      isTrending: !!isTrending,
-      tags: tags || [],
+      source: source?.trim() || 'Nebulytix',
+      coverImage: coverImage.trim(),
+      isFeatured: Boolean(isFeatured),
+      isTrending: Boolean(isTrending),
+      tags: Array.isArray(tags) ? tags.map((t: string) => t.trim()) : [],
       publishedAt: new Date(),
     });
 
     await news.save();
-    res.status(201).json({ success: true, data: news });
+    
+    res.status(201).json({
+      success: true,
+      data: news,
+      message: 'News created successfully',
+    });
   } catch (error) {
+    console.error('Create news error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to create news',
+      message: 'Failed to create news',
     });
   }
 });
@@ -86,15 +73,19 @@ router.post('/news/create', authenticateAdmin, async (req: Request, res: Respons
 router.put('/news/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const updates = sanitizeQuery(req.body);
 
-    // Validate category if provided
-    if (updates.category) {
-      const validCategories = ['Technology', 'Business', 'Science', 'World', 'Health'];
-      if (!validCategories.includes(updates.category)) {
-        return res.status(400).json({ error: 'Invalid category' });
-      }
+    // Validate category if being updated
+    if (updates.category && !VALID_CATEGORIES.includes(updates.category)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid category. Must be one of: ${VALID_CATEGORIES.join(', ')}`,
+      });
     }
+
+    // Remove fields that shouldn't be updated
+    delete updates._id;
+    delete updates.createdAt;
 
     const news = await News.findByIdAndUpdate(id, updates, {
       new: true,
@@ -102,14 +93,22 @@ router.put('/news/:id', authenticateAdmin, async (req: Request, res: Response) =
     });
 
     if (!news) {
-      return res.status(404).json({ success: false, error: 'News not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'News not found',
+      });
     }
 
-    res.json({ success: true, data: news });
+    res.json({
+      success: true,
+      data: news,
+      message: 'News updated successfully',
+    });
   } catch (error) {
+    console.error('Update news error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to update news',
+      message: 'Failed to update news',
     });
   }
 });
@@ -122,14 +121,21 @@ router.delete('/news/:id', authenticateAdmin, async (req: Request, res: Response
     const news = await News.findByIdAndDelete(id);
 
     if (!news) {
-      return res.status(404).json({ success: false, error: 'News not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'News not found',
+      });
     }
 
-    res.json({ success: true, message: 'News deleted successfully' });
+    res.json({
+      success: true,
+      message: 'News deleted successfully',
+    });
   } catch (error) {
+    console.error('Delete news error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to delete news',
+      message: 'Failed to delete news',
     });
   }
 });
@@ -141,7 +147,10 @@ router.patch('/news/:id/featured', authenticateAdmin, async (req: Request, res: 
 
     const news = await News.findById(id);
     if (!news) {
-      return res.status(404).json({ success: false, error: 'News not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'News not found',
+      });
     }
 
     news.isFeatured = !news.isFeatured;
@@ -150,12 +159,13 @@ router.patch('/news/:id/featured', authenticateAdmin, async (req: Request, res: 
     res.json({
       success: true,
       data: news,
-      message: `News ${news.isFeatured ? 'marked as' : 'removed from'} featured`,
+      message: news.isFeatured ? 'Marked as featured' : 'Removed from featured',
     });
   } catch (error) {
+    console.error('Toggle featured error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to toggle featured',
+      message: 'Failed to toggle featured status',
     });
   }
 });
@@ -167,7 +177,10 @@ router.patch('/news/:id/trending', authenticateAdmin, async (req: Request, res: 
 
     const news = await News.findById(id);
     if (!news) {
-      return res.status(404).json({ success: false, error: 'News not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'News not found',
+      });
     }
 
     news.isTrending = !news.isTrending;
@@ -176,12 +189,13 @@ router.patch('/news/:id/trending', authenticateAdmin, async (req: Request, res: 
     res.json({
       success: true,
       data: news,
-      message: `News ${news.isTrending ? 'marked as' : 'removed from'} trending`,
+      message: news.isTrending ? 'Marked as trending' : 'Removed from trending',
     });
   } catch (error) {
+    console.error('Toggle trending error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to toggle trending',
+      message: 'Failed to toggle trending status',
     });
   }
 });
@@ -189,15 +203,20 @@ router.patch('/news/:id/trending', authenticateAdmin, async (req: Request, res: 
 // Get all news (admin view)
 router.get('/news/all', authenticateAdmin, async (req: Request, res: Response) => {
   try {
-    const { category, page = 1, limit = 50 } = req.query;
+    const { category, page = 1, limit = 50, search } = req.query;
 
-    const pageNum = parseInt(page as string) || 1;
-    const limitNum = parseInt(limit as string) || 50;
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string) || 50));
     const skip = (pageNum - 1) * limitNum;
 
-    const filter: Record<string, string> = {};
-    if (category) {
-      filter.category = category as string;
+    const filter: any = {};
+    
+    if (category && VALID_CATEGORIES.includes(category as string)) {
+      filter.category = category;
+    }
+    
+    if (search && typeof search === 'string' && search.trim()) {
+      filter.$text = { $search: search.trim() };
     }
 
     const news = await News.find(filter)
@@ -219,9 +238,10 @@ router.get('/news/all', authenticateAdmin, async (req: Request, res: Response) =
       },
     });
   } catch (error) {
+    console.error('Get all news error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to fetch news',
+      message: 'Failed to fetch news',
     });
   }
 });
@@ -229,17 +249,17 @@ router.get('/news/all', authenticateAdmin, async (req: Request, res: Response) =
 // Get dashboard stats
 router.get('/stats', authenticateAdmin, async (req: Request, res: Response) => {
   try {
-    const totalNews = await News.countDocuments();
-    const featuredNews = await News.countDocuments({ isFeatured: true });
-    const trendingNews = await News.countDocuments({ isTrending: true });
-
-    const newsByCategory = await News.aggregate([
-      { $group: { _id: '$category', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-    ]);
-
-    const totalViews = await News.aggregate([
-      { $group: { _id: null, total: { $sum: '$views' } } },
+    const [totalNews, featuredNews, trendingNews, newsByCategory, viewsResult] = await Promise.all([
+      News.countDocuments(),
+      News.countDocuments({ isFeatured: true }),
+      News.countDocuments({ isTrending: true }),
+      News.aggregate([
+        { $group: { _id: '$category', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      News.aggregate([
+        { $group: { _id: null, total: { $sum: '$views' } } },
+      ]),
     ]);
 
     res.json({
@@ -248,14 +268,41 @@ router.get('/stats', authenticateAdmin, async (req: Request, res: Response) => {
         totalNews,
         featuredNews,
         trendingNews,
-        totalViews: totalViews[0]?.total || 0,
+        totalViews: viewsResult[0]?.total || 0,
         newsByCategory,
       },
     });
   } catch (error) {
+    console.error('Get stats error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to fetch stats',
+      message: 'Failed to fetch stats',
+    });
+  }
+});
+
+// Get single news for editing
+router.get('/news/:id', authenticateAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const news = await News.findById(id).lean();
+
+    if (!news) {
+      return res.status(404).json({
+        success: false,
+        message: 'News not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      data: news,
+    });
+  } catch (error) {
+    console.error('Get news error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch news',
     });
   }
 });

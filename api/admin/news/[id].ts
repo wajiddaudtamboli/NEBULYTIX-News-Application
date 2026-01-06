@@ -103,14 +103,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (action === 'featured') {
         news.isFeatured = !news.isFeatured;
+        await news.save();
+        return res.status(200).json({ 
+          success: true, 
+          data: news,
+          message: news.isFeatured ? 'Marked as featured' : 'Removed from featured'
+        });
       } else if (action === 'trending') {
         news.isTrending = !news.isTrending;
+        await news.save();
+        return res.status(200).json({ 
+          success: true, 
+          data: news,
+          message: news.isTrending ? 'Marked as trending' : 'Removed from trending'
+        });
       } else {
-        return res.status(400).json({ error: 'Invalid action' });
+        return res.status(400).json({ error: 'Invalid action. Use ?action=featured or ?action=trending' });
       }
-
-      await news.save();
-      return res.status(200).json({ success: true, data: news });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });

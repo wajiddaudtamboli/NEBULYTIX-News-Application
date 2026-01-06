@@ -55,10 +55,20 @@ const newsSchema = new Schema<INews>(
     views: {
       type: Number,
       default: 0,
+      index: true,
     },
     tags: [String],
   },
   { timestamps: true }
 );
+
+// Compound indexes for common queries
+newsSchema.index({ category: 1, publishedAt: -1 });
+newsSchema.index({ isFeatured: 1, publishedAt: -1 });
+newsSchema.index({ isTrending: 1, views: -1 });
+newsSchema.index({ publishedAt: -1, views: -1 });
+
+// Text index for search
+newsSchema.index({ title: 'text', summary: 'text', tags: 'text' });
 
 export default mongoose.model<INews>('News', newsSchema);

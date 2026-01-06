@@ -20,18 +20,15 @@ const connectDB = async () => {
   }
 };
 
-const userSchema = new mongoose.Schema({
-  clerkId: { type: String, required: true, unique: true },
-  email: { type: String, required: true },
-  name: { type: String },
-  savedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: 'News' }],
-}, { timestamps: true });
-
 const newsSchema = new mongoose.Schema({
   title: { type: String, required: true },
   summary: { type: String, required: true },
   content: { type: String },
-  category: { type: String, required: true },
+  category: {
+    type: String,
+    enum: ['Technology', 'Business', 'Science', 'World', 'Health'],
+    required: true
+  },
   source: { type: String, required: true },
   coverImage: { type: String, required: true },
   publishedAt: { type: Date, default: Date.now },
@@ -41,44 +38,49 @@ const newsSchema = new mongoose.Schema({
   tags: [{ type: String }],
 }, { timestamps: true });
 
-const User = mongoose.models.User || mongoose.model('User', userSchema);
-mongoose.models.News || mongoose.model('News', newsSchema);
+const News = mongoose.models.News || mongoose.model('News', newsSchema);
 
-// This handles both /api/user/saved and /api/user/saved/all
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-clerk-user-id');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-admin-secret, x-clerk-user-id, x-clerk-id, x-admin-role');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  if (req.method !== 'GET') {
+  if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     await connectDB();
 
-    const clerkId = req.headers['x-clerk-user-id'] as string;
+    const { title, summary, category, source, coverImage, isFeatured, isTrending, tags } = req.body;
 
-    if (!clerkId) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    if (!title || !summary || !category || !coverImage) {
+      return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
 
-    const user = await User.findOne({ clerkId }).populate('savedArticles');
+    const news = new News({
+      title,
+      summary,
+      category,
+      source: source || 'Nebulytix',
+      coverImage,
+      isFeatured: !!isFeatured,
+      isTrending: !!isTrending,
+      tags: tags || [],
+      publishedAt: new Date(),
+    });
 
-    if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' });
-    }
-
-    res.status(200).json({ success: true, data: user.savedArticles });
+    await news.save();
+    return res.status(201).json({ success: true, data: news });
   } catch (error) {
-    console.error('Saved articles error:', error);
+    console.error('Admin news create error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to fetch saved articles',
+      error: error instanceof Error ? error.message : 'Failed to create news',
     });
   }
 }

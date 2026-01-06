@@ -12,8 +12,76 @@
   },
   "rewrites": [
     {
+      "source": "/api/v1/auth/admin/login",
+      "destination": "/api/auth/login"
+    },
+    {
+      "source": "/api/v1/auth/admin/setup",
+      "destination": "/api/auth/setup"
+    },
+    {
+      "source": "/api/v1/auth/admin/verify",
+      "destination": "/api/auth/verify"
+    },
+    {
+      "source": "/api/v1/news/featured",
+      "destination": "/api/featured"
+    },
+    {
+      "source": "/api/v1/news/trending",
+      "destination": "/api/trending"
+    },
+    {
+      "source": "/api/v1/news/:id",
+      "destination": "/api/news/[id]"
+    },
+    {
+      "source": "/api/v1/news",
+      "destination": "/api/news"
+    },
+    {
+      "source": "/api/v1/admin/stats",
+      "destination": "/api/admin/stats"
+    },
+    {
+      "source": "/api/v1/admin/news/all",
+      "destination": "/api/admin/news/all"
+    },
+    {
+      "source": "/api/v1/admin/news/create",
+      "destination": "/api/admin/news/create"
+    },
+    {
+      "source": "/api/v1/admin/news/:id/featured",
+      "destination": "/api/admin/news/[id]?action=featured"
+    },
+    {
+      "source": "/api/v1/admin/news/:id/trending",
+      "destination": "/api/admin/news/[id]?action=trending"
+    },
+    {
+      "source": "/api/v1/admin/news/:id",
+      "destination": "/api/admin/news/[id]"
+    },
+    {
       "source": "/api/news/:id",
       "destination": "/api/news/[id]"
+    },
+    {
+      "source": "/api/admin/news/all",
+      "destination": "/api/admin/news/all"
+    },
+    {
+      "source": "/api/admin/news/create",
+      "destination": "/api/admin/news/create"
+    },
+    {
+      "source": "/api/admin/news/:id/featured",
+      "destination": "/api/admin/news/[id]?action=featured"
+    },
+    {
+      "source": "/api/admin/news/:id/trending",
+      "destination": "/api/admin/news/[id]?action=trending"
     },
     {
       "source": "/api/admin/news/:id",
@@ -22,6 +90,10 @@
     {
       "source": "/api/user/save/:newsId",
       "destination": "/api/user/save/[newsId]"
+    },
+    {
+      "source": "/api/user/saved/all",
+      "destination": "/api/user/saved/all"
     },
     {
       "source": "/api/(.*)",

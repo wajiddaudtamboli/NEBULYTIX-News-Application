@@ -20,18 +20,15 @@ const connectDB = async () => {
   }
 };
 
-const userSchema = new mongoose.Schema({
-  clerkId: { type: String, required: true, unique: true },
-  email: { type: String, required: true },
-  name: { type: String },
-  savedArticles: [{ type: mongoose.Schema.Types.ObjectId, ref: 'News' }],
-}, { timestamps: true });
-
 const newsSchema = new mongoose.Schema({
   title: { type: String, required: true },
   summary: { type: String, required: true },
   content: { type: String },
-  category: { type: String, required: true },
+  category: {
+    type: String,
+    enum: ['Technology', 'Business', 'Science', 'World', 'Health'],
+    required: true
+  },
   source: { type: String, required: true },
   coverImage: { type: String, required: true },
   publishedAt: { type: Date, default: Date.now },
@@ -41,14 +38,12 @@ const newsSchema = new mongoose.Schema({
   tags: [{ type: String }],
 }, { timestamps: true });
 
-const User = mongoose.models.User || mongoose.model('User', userSchema);
-mongoose.models.News || mongoose.model('News', newsSchema);
+const News = mongoose.models.News || mongoose.model('News', newsSchema);
 
-// This handles both /api/user/saved and /api/user/saved/all
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-clerk-user-id');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-admin-secret, x-clerk-user-id, x-clerk-id, x-admin-role');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -61,24 +56,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     await connectDB();
 
-    const clerkId = req.headers['x-clerk-user-id'] as string;
+    const { category, page = '1', limit = '20' } = req.query;
 
-    if (!clerkId) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    const pageNum = parseInt(page as string) || 1;
+    const limitNum = parseInt(limit as string) || 20;
+    const skip = (pageNum - 1) * limitNum;
+
+    const filter: Record<string, string> = {};
+    if (category && category !== 'all' && category !== 'All') {
+      filter.category = category as string;
     }
 
-    const user = await User.findOne({ clerkId }).populate('savedArticles');
+    const [news, total] = await Promise.all([
+      News.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
+      News.countDocuments(filter)
+    ]);
 
-    if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' });
-    }
-
-    res.status(200).json({ success: true, data: user.savedArticles });
+    return res.status(200).json({
+      success: true,
+      data: news,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: Math.ceil(total / limitNum),
+      },
+    });
   } catch (error) {
-    console.error('Saved articles error:', error);
+    console.error('Admin news all error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to fetch saved articles',
+      error: error instanceof Error ? error.message : 'Operation failed',
     });
   }
 }

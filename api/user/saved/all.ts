@@ -44,7 +44,6 @@ const newsSchema = new mongoose.Schema({
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 mongoose.models.News || mongoose.model('News', newsSchema);
 
-// This handles both /api/user/saved and /api/user/saved/all
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -64,16 +63,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const clerkId = req.headers['x-clerk-user-id'] as string;
 
     if (!clerkId) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
     const user = await User.findOne({ clerkId }).populate('savedArticles');
 
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' });
+      return res.status(200).json({ success: true, data: [] });
     }
 
-    res.status(200).json({ success: true, data: user.savedArticles });
+    res.status(200).json({ success: true, data: user.savedArticles || [] });
   } catch (error) {
     console.error('Saved articles error:', error);
     res.status(500).json({

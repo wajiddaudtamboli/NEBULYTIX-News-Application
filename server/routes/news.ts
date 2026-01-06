@@ -1,7 +1,7 @@
 import express, { Router, Request, Response } from 'express';
-import News from '../models/News';
-import User from '../models/User';
-import { optionalAuth, authenticateUser } from '../middleware/auth';
+import News from '../models/News.js';
+import User from '../models/User.js';
+import { optionalAuth, authenticateUser } from '../middleware/auth.js';
 
 const router: Router = express.Router();
 

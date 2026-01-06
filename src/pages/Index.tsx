@@ -13,7 +13,7 @@ import { TrendingStrip } from '@/components/TrendingStrip'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { fetchNews, fetchFeaturedNews, fetchTrendingNews, toggleSaveArticle, fetchSavedArticles } from '@/lib/api'
+import { fetchNews, fetchFeaturedNews, fetchTrendingNews, toggleSaveArticle, fetchSavedArticles, syncUser } from '@/lib/api'
 import { mockNews, categories } from '@/data/mockNews'
 import { toast } from '@/hooks/use-toast'
 
@@ -51,9 +51,11 @@ export default function Index() {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0])
   const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95])
 
-  // Fetch saved articles on mount
+  // Fetch saved articles on mount and sync user
   useEffect(() => {
     if (isSignedIn && user) {
+      // Sync user with backend
+      syncUser(user.id, user.primaryEmailAddress?.emailAddress || '', user.fullName || user.firstName || '')
       loadSavedArticles()
     }
   }, [isSignedIn, user])
@@ -320,7 +322,7 @@ export default function Index() {
       )}
 
       {/* News Section */}
-      <section ref={newsRef} className="content-container py-16 md:py-24">
+      <section ref={newsRef} className="content-container py-12 md:py-16">
         {/* Section header with date picker */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}

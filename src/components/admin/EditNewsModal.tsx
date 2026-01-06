@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { X, ImageIcon, Plus, Minus } from 'lucide-react'
-import { useUser } from '@clerk/clerk-react'
+import { X, ImageIcon, Plus, Minus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { adminUpdateNews } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 interface News {
@@ -37,7 +37,6 @@ interface Props {
 const categories = ['Technology', 'Business', 'Science', 'World', 'Health']
 
 export function EditNewsModal({ news, onClose, onSuccess }: Props) {
-  const { user } = useUser()
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     title: news.title,
@@ -50,8 +49,6 @@ export function EditNewsModal({ news, onClose, onSuccess }: Props) {
     tags: news.tags.length > 0 ? news.tags : [''],
   })
 
-  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api')
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -62,25 +59,16 @@ export function EditNewsModal({ news, onClose, onSuccess }: Props) {
 
     setLoading(true)
     try {
-      const res = await fetch(`${apiUrl}/admin/news/${news._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-clerk-id': user?.id || '',
-          'x-admin-role': 'admin',
-        },
-        body: JSON.stringify({
-          ...form,
-          tags: form.tags.filter(t => t.trim()),
-        }),
+      const result = await adminUpdateNews(news._id, {
+        ...form,
+        tags: form.tags.filter(t => t.trim()),
       })
-      const data = await res.json()
       
-      if (data.success) {
+      if (result.success) {
         toast({ title: 'News updated successfully' })
         onSuccess()
       } else {
-        toast({ title: data.error || 'Failed to update news', variant: 'destructive' })
+        toast({ title: result.message || 'Failed to update news', variant: 'destructive' })
       }
     } catch (error) {
       toast({ title: 'Failed to update news', variant: 'destructive' })
@@ -244,9 +232,9 @@ export function EditNewsModal({ news, onClose, onSuccess }: Props) {
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
-            <Button type="submit" variant="hero" disabled={loading} className="flex-1">
+            <Button type="submit" variant="default" disabled={loading} className="flex-1">
               {loading ? (
-                <div className="h-5 w-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
                 'Save Changes'
               )}

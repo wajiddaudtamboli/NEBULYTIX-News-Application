@@ -32,7 +32,7 @@ interface Article {
   isTrending: boolean
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const API_URL = import.meta.env.VITE_API_URL || '/api'
 
 export default function ArticleDetail() {
   const { id } = useParams<{ id: string }>()
@@ -58,8 +58,15 @@ export default function ArticleDetail() {
       setLoading(true)
       const response = await fetch(`${API_URL}/news/${id}`)
       if (!response.ok) throw new Error('Article not found')
-      const data = await response.json()
-      setArticle(data)
+      const result = await response.json()
+      // Handle both {success, data} format and direct data format
+      if (result.success && result.data) {
+        setArticle(result.data)
+      } else if (result._id) {
+        setArticle(result)
+      } else {
+        throw new Error('Invalid response format')
+      }
     } catch (err) {
       setError('Failed to load article')
       console.error(err)

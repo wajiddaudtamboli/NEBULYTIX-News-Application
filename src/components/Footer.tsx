@@ -23,7 +23,7 @@ export function Footer() {
       whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="relative border-t border-border/50 mt-20 bg-gradient-to-b from-transparent to-muted/30"
+      className="relative border-t border-border/50 mt-12 bg-gradient-to-b from-transparent to-muted/30"
     >
       {/* Decorative top gradient line */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />

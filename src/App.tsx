@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react"
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as Sonner } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -8,61 +9,115 @@ import { ClerkProvider } from "@clerk/clerk-react"
 import { useTheme } from "@/hooks/useTheme"
 import { Navbar } from "@/components/Navbar"
 import { Footer } from "@/components/Footer"
-import Index from "./pages/Index"
-import SavedNews from "./pages/SavedNews"
-import Login from "./pages/Login"
-import SignUp from "./pages/SignUp"
-import AdminDashboard from "./pages/AdminDashboard"
-import ArticleDetail from "./pages/ArticleDetail"
-import NotFound from "./pages/NotFound"
+import { ErrorBoundary } from "@/components/ErrorBoundary"
+import { AppProvider } from "@/context/AppContext"
+import { Loader2 } from "lucide-react"
 
-const queryClient = new QueryClient()
+// Lazy load pages for better performance
+const Index = lazy(() => import("./pages/Index"))
+const SavedNews = lazy(() => import("./pages/SavedNews"))
+const Login = lazy(() => import("./pages/Login"))
+const SignUp = lazy(() => import("./pages/SignUp"))
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"))
+const AdminLogin = lazy(() => import("./pages/AdminLogin"))
+const ArticleDetail = lazy(() => import("./pages/ArticleDetail"))
+const NotFound = lazy(() => import("./pages/NotFound"))
 
-const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 2,
+    },
+  },
+})
 
-if (!publishableKey) {
-  throw new Error("VITE_CLERK_PUBLISHABLE_KEY is not set");
+// Get Clerk key with fallback for development
+const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+
+// Loading component
+function PageLoader() {
+  return (
+    <div className="min-h-[50vh] flex items-center justify-center">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  )
+}
+
+// Environment error component
+function EnvError() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="max-w-md text-center space-y-4">
+        <h1 className="text-2xl font-bold text-destructive">Configuration Error</h1>
+        <p className="text-muted-foreground">
+          Missing required environment variables. Please check your .env file.
+        </p>
+        <code className="block p-4 bg-muted rounded-lg text-sm">
+          VITE_CLERK_PUBLISHABLE_KEY is not set
+        </code>
+      </div>
+    </div>
+  )
 }
 
 function AnimatedRoutes() {
   const location = useLocation()
   
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Index />} />
-        <Route path="/saved" element={<SavedNews />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/article/:id" element={<ArticleDetail />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </AnimatePresence>
+    <Suspense fallback={<PageLoader />}>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<Index />} />
+          <Route path="/saved" element={<SavedNews />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/article/:id" element={<ArticleDetail />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AnimatePresence>
+    </Suspense>
+  )
+}
+
+function AppContent() {
+  const { theme, toggleTheme } = useTheme()
+
+  return (
+    <BrowserRouter>
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar theme={theme} onToggleTheme={toggleTheme} />
+        <main className="flex-1">
+          <AnimatedRoutes />
+        </main>
+        <Footer />
+      </div>
+    </BrowserRouter>
   )
 }
 
 const App = () => {
-  const { theme, toggleTheme } = useTheme()
+  // Show error if Clerk key is missing
+  if (!publishableKey) {
+    return <EnvError />
+  }
 
   return (
-    <ClerkProvider publishableKey={publishableKey}>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <div className="min-h-screen flex flex-col bg-background">
-              <Navbar theme={theme} onToggleTheme={toggleTheme} />
-              <div className="flex-1">
-                <AnimatedRoutes />
-              </div>
-              <Footer />
-            </div>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ClerkProvider>
+    <ErrorBoundary>
+      <ClerkProvider publishableKey={publishableKey}>
+        <QueryClientProvider client={queryClient}>
+          <AppProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <AppContent />
+            </TooltipProvider>
+          </AppProvider>
+        </QueryClientProvider>
+      </ClerkProvider>
+    </ErrorBoundary>
   )
 }
 

@@ -137,7 +137,7 @@ function Particles() {
 
 export function NewsGlobe() {
   return (
-    <div className="absolute inset-0 -z-10 opacity-70">
+    <div className="absolute inset-0 opacity-80 pointer-events-none" style={{ zIndex: 0 }}>
       <Canvas
         camera={{ position: [0, 0, 7], fov: 45 }}
         dpr={[1, 2]}
