@@ -125,17 +125,31 @@ import newsRoutes from './routes/news.js';
 import userRoutes from './routes/user.js';
 import adminRoutes from './routes/admin.js';
 import authRoutes from './routes/auth.js';
+import categoryRoutes from './routes/categories.js';
+import settingsRoutes from './routes/settings.js';
+import blogRoutes from './routes/blogs.js';
+import pageRoutes from './routes/pages.js';
+import enquiryRoutes from './routes/enquiries.js';
+import mediaRoutes from './routes/media.js';
 
 // API v1 routes
 app.use('/api/v1/news', newsRoutes);
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/categories', categoryRoutes);
+app.use('/api/v1/settings', settingsRoutes);
+app.use('/api/v1/blogs', blogRoutes);
+app.use('/api/v1/pages', pageRoutes);
+app.use('/api/v1/enquiries', enquiryRoutes);
+app.use('/api/v1/media', mediaRoutes);
 
 // Legacy routes (backward compatibility)
 app.use('/api/news', newsRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Convenience routes for featured and trending
 app.get('/api/featured', async (req, res) => {

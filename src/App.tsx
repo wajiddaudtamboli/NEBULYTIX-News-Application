@@ -18,10 +18,20 @@ const Index = lazy(() => import("./pages/Index"))
 const SavedNews = lazy(() => import("./pages/SavedNews"))
 const Login = lazy(() => import("./pages/Login"))
 const SignUp = lazy(() => import("./pages/SignUp"))
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"))
 const AdminLogin = lazy(() => import("./pages/AdminLogin"))
 const ArticleDetail = lazy(() => import("./pages/ArticleDetail"))
 const NotFound = lazy(() => import("./pages/NotFound"))
+const Contact = lazy(() => import("./pages/Contact"))
+
+// Admin Pages
+const AdminDashboard = lazy(() => import("./pages/admin/DashboardPage"))
+const AdminNews = lazy(() => import("./pages/admin/NewsManagementPage"))
+const AdminCategories = lazy(() => import("./pages/admin/CategoriesPage"))
+const AdminSettings = lazy(() => import("./pages/admin/SettingsPage"))
+const AdminEnquiries = lazy(() => import("./pages/admin/EnquiriesPage"))
+const AdminBlogs = lazy(() => import("./pages/admin/BlogsPage"))
+const AdminPages = lazy(() => import("./pages/admin/PagesPage"))
+const AdminMedia = lazy(() => import("./pages/admin/MediaPage"))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,18 +73,31 @@ function EnvError() {
 
 function AnimatedRoutes() {
   const location = useLocation()
+  const isAdminRoute = location.pathname.startsWith('/admin')
   
   return (
     <Suspense fallback={<PageLoader />}>
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
+          {/* Public Routes */}
           <Route path="/" element={<Index />} />
           <Route path="/saved" element={<SavedNews />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/article/:id" element={<ArticleDetail />} />
+          
+          {/* Admin Routes */}
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/article/:id" element={<ArticleDetail />} />
+          <Route path="/admin/news" element={<AdminNews />} />
+          <Route path="/admin/categories" element={<AdminCategories />} />
+          <Route path="/admin/settings" element={<AdminSettings />} />
+          <Route path="/admin/enquiries" element={<AdminEnquiries />} />
+          <Route path="/admin/blogs" element={<AdminBlogs />} />
+          <Route path="/admin/pages" element={<AdminPages />} />
+          <Route path="/admin/media" element={<AdminMedia />} />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AnimatePresence>
@@ -84,16 +107,29 @@ function AnimatedRoutes() {
 
 function AppContent() {
   const { theme, toggleTheme } = useTheme()
+  const location = useLocation()
+  const isAdminRoute = location.pathname.startsWith('/admin') && location.pathname !== '/admin/login'
+
+  // Don't show navbar/footer on admin pages (except login)
+  if (isAdminRoute) {
+    return <AnimatedRoutes />
+  }
 
   return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <Navbar theme={theme} onToggleTheme={toggleTheme} />
+      <main className="flex-1">
+        <AnimatedRoutes />
+      </main>
+      <Footer />
+    </div>
+  )
+}
+
+function AppRouter() {
+  return (
     <BrowserRouter>
-      <div className="min-h-screen flex flex-col bg-background">
-        <Navbar theme={theme} onToggleTheme={toggleTheme} />
-        <main className="flex-1">
-          <AnimatedRoutes />
-        </main>
-        <Footer />
-      </div>
+      <AppContent />
     </BrowserRouter>
   )
 }
@@ -112,7 +148,7 @@ const App = () => {
             <TooltipProvider>
               <Toaster />
               <Sonner />
-              <AppContent />
+              <AppRouter />
             </TooltipProvider>
           </AppProvider>
         </QueryClientProvider>
