@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { Filter } from 'lucide-react'
 
 interface CategoryFilterProps {
   categories: string[]
@@ -8,24 +9,48 @@ interface CategoryFilterProps {
 
 export function CategoryFilter({ categories, selected, onSelect }: CategoryFilterProps) {
   return (
-    <div className="flex flex-wrap gap-2">
-      {categories.map((category) => (
-        <motion.button
-          key={category}
-          onClick={() => onSelect(category)}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className={`
-            px-4 py-2 rounded-full text-sm font-medium transition-all duration-300
-            ${selected === category 
-              ? 'bg-primary text-primary-foreground shadow-lg' 
-              : 'glass-panel text-foreground hover:bg-muted'
-            }
-          `}
-        >
-          {category}
-        </motion.button>
-      ))}
+    <div className="flex items-center gap-2 flex-wrap">
+      <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground mr-2">
+        <Filter className="h-4 w-4" />
+        <span>Filter:</span>
+      </div>
+      
+      <div className="flex flex-wrap gap-2">
+        {categories.map((category, idx) => {
+          const isSelected = selected === category
+          
+          return (
+            <motion.button
+              key={category}
+              onClick={() => onSelect(category)}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: idx * 0.05 }}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              className={`
+                relative px-4 py-2 rounded-full text-sm font-medium 
+                transition-all duration-300 focus-visible:ring-2 focus-visible:ring-primary
+                ${isSelected 
+                  ? 'bg-primary text-primary-foreground shadow-glow-sm' 
+                  : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/50'
+                }
+              `}
+            >
+              {category}
+              
+              {/* Active indicator dot */}
+              {isSelected && (
+                <motion.div
+                  layoutId="category-indicator"
+                  className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary-foreground"
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                />
+              )}
+            </motion.button>
+          )
+        })}
+      </div>
     </div>
   )
 }
