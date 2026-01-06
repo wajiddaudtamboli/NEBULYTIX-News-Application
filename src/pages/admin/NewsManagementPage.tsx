@@ -385,20 +385,20 @@ export default function NewsManagementPage() {
       </div>
 
       {/* Create Modal */}
-      <CreateNewsModal
-        open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSuccess={() => {
-          setShowCreateModal(false)
-          fetchNews()
-        }}
-      />
+      {showCreateModal && (
+        <CreateNewsModal
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={() => {
+            setShowCreateModal(false)
+            fetchNews()
+          }}
+        />
+      )}
 
       {/* Edit Modal */}
       {editingNews && (
         <EditNewsModal
           news={editingNews}
-          open={!!editingNews}
           onClose={() => setEditingNews(null)}
           onSuccess={() => {
             setEditingNews(null)

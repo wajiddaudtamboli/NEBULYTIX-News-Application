@@ -480,19 +480,19 @@ export default function MediaPage() {
                     </span>
                     <span className="w-24 text-sm">{item.folder}</span>
                     <div className="w-32 flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => copyToClipboard(item.url)}>
+                      <Button variant="ghost" size="icon" onClick={() => copyToClipboard(item.url)} title="Copy URL">
                         {copiedUrl === item.url ? (
                           <Check className="w-4 h-4" />
                         ) : (
                           <Copy className="w-4 h-4" />
                         )}
                       </Button>
-                      <Button variant="ghost" size="icon" asChild>
-                        <a href={item.url} target="_blank" rel="noopener noreferrer">
+                      <Button variant="ghost" size="icon" asChild title="Download">
+                        <a href={item.url} target="_blank" rel="noopener noreferrer" aria-label="Download file">
                           <Download className="w-4 h-4" />
                         </a>
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(item._id)}>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(item._id)} title="Delete">
                         <Trash2 className="w-4 h-4 text-red-500" />
                       </Button>
                     </div>

@@ -351,6 +351,8 @@ export default function CategoriesPage() {
                   <button
                     key={color}
                     type="button"
+                    title={`Select color ${color}`}
+                    aria-label={`Select color ${color}`}
                     className={cn(
                       'w-8 h-8 rounded-full transition-all',
                       formData.color === color && 'ring-2 ring-offset-2 ring-primary'
