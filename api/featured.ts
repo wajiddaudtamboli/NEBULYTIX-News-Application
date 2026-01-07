@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import mongoose from 'mongoose';
+import mongoose, { Model, Document } from 'mongoose';
 
+// MongoDB Connection Cache
 let isConnected = false;
 
 const connectDB = async () => {
@@ -10,6 +11,20 @@ const connectDB = async () => {
   await mongoose.connect(mongoUri);
   isConnected = true;
 };
+
+// News Interface
+interface INews extends Document {
+  title: string;
+  summary: string;
+  category: string;
+  source: string;
+  coverImage: string;
+  publishedAt: Date;
+  isFeatured: boolean;
+  isTrending: boolean;
+  views: number;
+  tags: string[];
+}
 
 const newsSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -24,7 +39,8 @@ const newsSchema = new mongoose.Schema({
   tags: [{ type: String }],
 }, { timestamps: true });
 
-const News = mongoose.models.News || mongoose.model('News', newsSchema);
+// Use type assertion to fix TS2349
+const News = (mongoose.models.News || mongoose.model<INews>('News', newsSchema)) as Model<INews>;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');

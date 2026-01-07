@@ -5,7 +5,7 @@
   "installCommand": "npm install",
   "framework": "vite",
   "functions": {
-    "api/**/*.ts": {
+    "api/*.ts": {
       "memory": 1024,
       "maxDuration": 10
     }
@@ -13,15 +13,15 @@
   "rewrites": [
     {
       "source": "/api/v1/auth/admin/login",
-      "destination": "/api/auth/login"
+      "destination": "/api/auth?action=login"
     },
     {
       "source": "/api/v1/auth/admin/setup",
-      "destination": "/api/auth/setup"
+      "destination": "/api/auth?action=setup"
     },
     {
       "source": "/api/v1/auth/admin/verify",
-      "destination": "/api/auth/verify"
+      "destination": "/api/auth?action=verify"
     },
     {
       "source": "/api/v1/news/featured",
@@ -33,7 +33,7 @@
     },
     {
       "source": "/api/v1/news/:id",
-      "destination": "/api/news/[id]"
+      "destination": "/api/news?id=:id"
     },
     {
       "source": "/api/v1/news",
@@ -41,63 +41,95 @@
     },
     {
       "source": "/api/v1/admin/stats",
-      "destination": "/api/admin/stats"
+      "destination": "/api/admin?action=stats"
     },
     {
       "source": "/api/v1/admin/news/all",
-      "destination": "/api/admin/news/all"
+      "destination": "/api/admin"
     },
     {
       "source": "/api/v1/admin/news/create",
-      "destination": "/api/admin/news/create"
+      "destination": "/api/admin"
     },
     {
       "source": "/api/v1/admin/news/:id/featured",
-      "destination": "/api/admin/news/[id]?action=featured"
+      "destination": "/api/admin?id=:id&action=featured"
     },
     {
       "source": "/api/v1/admin/news/:id/trending",
-      "destination": "/api/admin/news/[id]?action=trending"
+      "destination": "/api/admin?id=:id&action=trending"
     },
     {
       "source": "/api/v1/admin/news/:id",
-      "destination": "/api/admin/news/[id]"
+      "destination": "/api/admin?id=:id"
+    },
+    {
+      "source": "/api/v1/user/sync",
+      "destination": "/api/user?action=sync"
+    },
+    {
+      "source": "/api/v1/user/profile",
+      "destination": "/api/user?action=profile"
+    },
+    {
+      "source": "/api/v1/user/saved/all",
+      "destination": "/api/user?action=saved"
+    },
+    {
+      "source": "/api/v1/user/saved",
+      "destination": "/api/user?action=saved"
+    },
+    {
+      "source": "/api/v1/user/save/:newsId",
+      "destination": "/api/user?action=save&newsId=:newsId"
     },
     {
       "source": "/api/news/:id",
-      "destination": "/api/news/[id]"
+      "destination": "/api/news?id=:id"
     },
     {
       "source": "/api/admin/news/all",
-      "destination": "/api/admin/news/all"
+      "destination": "/api/admin"
     },
     {
       "source": "/api/admin/news/create",
-      "destination": "/api/admin/news/create"
+      "destination": "/api/admin"
     },
     {
       "source": "/api/admin/news/:id/featured",
-      "destination": "/api/admin/news/[id]?action=featured"
+      "destination": "/api/admin?id=:id&action=featured"
     },
     {
       "source": "/api/admin/news/:id/trending",
-      "destination": "/api/admin/news/[id]?action=trending"
+      "destination": "/api/admin?id=:id&action=trending"
     },
     {
       "source": "/api/admin/news/:id",
-      "destination": "/api/admin/news/[id]"
+      "destination": "/api/admin?id=:id"
+    },
+    {
+      "source": "/api/admin/stats",
+      "destination": "/api/admin?action=stats"
     },
     {
       "source": "/api/user/save/:newsId",
-      "destination": "/api/user/save/[newsId]"
+      "destination": "/api/user?action=save&newsId=:newsId"
     },
     {
       "source": "/api/user/saved/all",
-      "destination": "/api/user/saved/all"
+      "destination": "/api/user?action=saved"
     },
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "source": "/api/user/saved",
+      "destination": "/api/user?action=saved"
+    },
+    {
+      "source": "/api/user/sync",
+      "destination": "/api/user?action=sync"
+    },
+    {
+      "source": "/api/user/profile",
+      "destination": "/api/user?action=profile"
     },
     {
       "source": "/((?!api/).*)",

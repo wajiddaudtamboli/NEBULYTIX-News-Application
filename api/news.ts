@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import mongoose from 'mongoose';
+import mongoose, { Model, Document } from 'mongoose';
 
 // MongoDB Connection Cache
 let isConnected = false;
@@ -15,12 +15,26 @@ const connectDB = async () => {
   try {
     await mongoose.connect(mongoUri);
     isConnected = true;
-    console.log('MongoDB connected');
   } catch (error) {
     console.error('MongoDB connection error:', error);
     throw error;
   }
 };
+
+// News Interface
+interface INews extends Document {
+  title: string;
+  summary: string;
+  content?: string;
+  category: string;
+  source: string;
+  coverImage: string;
+  publishedAt: Date;
+  isFeatured: boolean;
+  isTrending: boolean;
+  views: number;
+  tags: string[];
+}
 
 // News Schema
 const newsSchema = new mongoose.Schema({
@@ -41,7 +55,8 @@ const newsSchema = new mongoose.Schema({
   tags: [{ type: String }],
 }, { timestamps: true });
 
-const News = mongoose.models.News || mongoose.model('News', newsSchema);
+// Use type assertion to fix TS2349
+const News = (mongoose.models.News || mongoose.model<INews>('News', newsSchema)) as Model<INews>;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS Headers
@@ -56,9 +71,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     await connectDB();
 
-    const { category, date, page = '1', limit = '12' } = req.query;
+    const { id, category, date, page = '1', limit = '12' } = req.query;
 
-    const query: any = {};
+    // If ID is provided, return single news item with view increment
+    if (id && typeof id === 'string') {
+      const news = await News.findByIdAndUpdate(
+        id,
+        { $inc: { views: 1 } },
+        { new: true }
+      ).lean();
+
+      if (!news) {
+        return res.status(404).json({ success: false, error: 'News not found' });
+      }
+
+      return res.status(200).json({ success: true, data: news });
+    }
+
+    // Otherwise list all news with pagination
+    const query: Record<string, unknown> = {};
 
     if (category && category !== 'All') {
       query.category = category;
