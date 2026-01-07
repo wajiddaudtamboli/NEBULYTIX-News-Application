@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Linkedin, Mail, MapPin, Globe, Building2, Phone, Instagram, Twitter } from 'lucide-react'
+import { Linkedin, Mail, MapPin, Globe, Building2, Phone, Instagram, Twitter, Zap, Earth, Smartphone, ShieldCheck, Newspaper, Cpu } from 'lucide-react'
 import { useLanguage } from '@/lib/LanguageContext'
 
 const LOGO_URL = 'https://res.cloudinary.com/duhhsnbwh/image/upload/v1767754727/WhatsApp_Image_2026-01-06_at_1.58.30_PM_gsijk5.jpg'
@@ -87,8 +87,21 @@ export function Footer() {
     { label: t('footer.terms'), href: '#' }
   ]
 
-  // Sliding text animation
-  const slidingText = "NEBULYTIX NEWS • NEBULYTIX TECHNOLOGIES • REAL-TIME INSIGHTS • GLOBAL NEWS • "
+  // Sliding text items with Lucide icons (no emoji)
+  const slidingItems = [
+    { icon: Newspaper, text: 'NEBULYTIX NEWS' },
+    { icon: Cpu, text: 'NEBULYTIX TECHNOLOGIES' },
+    { icon: Zap, text: 'REAL-TIME INSIGHTS' },
+    { icon: Earth, text: 'GLOBAL NEWS' },
+  ]
+
+  // Bottom strip items with Lucide icons
+  const bottomStripItems = [
+    { icon: Zap, text: 'Breaking News' },
+    { icon: Earth, text: 'Global Coverage' },
+    { icon: Smartphone, text: 'Real-time Updates' },
+    { icon: ShieldCheck, text: 'Trusted Source' },
+  ]
 
   return (
     <motion.footer
@@ -108,9 +121,15 @@ export function Footer() {
           className="flex whitespace-nowrap"
         >
           {[...Array(4)].map((_, i) => (
-            <span key={i} className="text-sm font-medium text-primary/80 mx-4">
-              {slidingText}
-            </span>
+            <div key={i} className="flex items-center">
+              {slidingItems.map((item, idx) => (
+                <span key={idx} className="flex items-center gap-2 text-sm font-medium text-primary/80 mx-4">
+                  <item.icon className="h-4 w-4" />
+                  {item.text}
+                  <span className="text-primary/40">•</span>
+                </span>
+              ))}
+            </div>
           ))}
         </motion.div>
       </div>
@@ -242,9 +261,15 @@ export function Footer() {
           className="flex whitespace-nowrap"
         >
           {[...Array(6)].map((_, i) => (
-            <span key={i} className="text-xs font-medium text-muted-foreground mx-6">
-              ⚡ Breaking News • 🌍 Global Coverage • 📱 Real-time Updates • 🔒 Trusted Source • 
-            </span>
+            <div key={i} className="flex items-center">
+              {bottomStripItems.map((item, idx) => (
+                <span key={idx} className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mx-4">
+                  <item.icon className="h-3.5 w-3.5" />
+                  {item.text}
+                  <span className="text-muted-foreground/40">•</span>
+                </span>
+              ))}
+            </div>
           ))}
         </motion.div>
       </div>
