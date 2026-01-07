@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { SkeletonCard } from '@/components/SkeletonCard'
 import { fetchSavedArticles, toggleSaveArticle } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
+import { useLanguage } from '@/lib/LanguageContext'
 
 interface NewsItem {
   _id: string
@@ -28,6 +29,7 @@ interface NewsItem {
 export default function SavedNews() {
   const { user, isLoaded, isSignedIn } = useUser()
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [savedNews, setSavedNews] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -74,11 +76,11 @@ export default function SavedNews() {
     )
 
     if (result.success) {
-      toast({ title: 'Article removed from saved' })
+      toast({ title: t('saved.articleRemoved') })
     } else {
       // Reload on failure
       loadSavedNews()
-      toast({ title: 'Failed to remove article', variant: 'destructive' })
+      toast({ title: t('saved.failedToRemove'), variant: 'destructive' })
     }
   }
 
@@ -104,21 +106,21 @@ export default function SavedNews() {
             <motion.div whileHover={{ x: -4 }} className="inline-block">
               <Button variant="ghost" className="gap-2 mb-6 -ml-2">
                 <ArrowLeft className="h-4 w-4" />
-                Back to Feed
+                {t('saved.backToFeed')}
               </Button>
             </motion.div>
           </Link>
 
           <div className="flex items-center gap-4 mb-2">
             <h1 className="font-display text-4xl md:text-5xl font-bold">
-              Saved Articles
+              {t('saved.title')}
             </h1>
             <span className="px-3 py-1 rounded-full bg-muted text-muted-foreground text-sm font-medium">
-              {savedNews.length} saved
+              {savedNews.length} {t('saved.savedCount')}
             </span>
           </div>
           <p className="text-muted-foreground text-lg">
-            Your bookmarked stories in one place
+            {t('saved.subtitle')}
           </p>
         </motion.div>
 

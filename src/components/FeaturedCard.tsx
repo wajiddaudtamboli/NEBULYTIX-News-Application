@@ -4,6 +4,7 @@ import { Bookmark, BookmarkCheck, ExternalLink, Clock, TrendingUp, Eye } from 'l
 import { Button } from './ui/button'
 import { MediaFrame } from './MediaFrame'
 import type { NewsItem } from './NewsCard'
+import { useLanguage } from '@/lib/LanguageContext'
 
 interface FeaturedCardProps {
   news: NewsItem
@@ -12,6 +13,7 @@ interface FeaturedCardProps {
 }
 
 export function FeaturedCard({ news, onSave, isSaved = false }: FeaturedCardProps) {
+  const { t } = useLanguage()
   const [saved, setSaved] = useState(isSaved)
   const [showConfirm, setShowConfirm] = useState(false)
 
@@ -41,8 +43,8 @@ export function FeaturedCard({ news, onSave, isSaved = false }: FeaturedCardProp
     const diff = now.getTime() - date.getTime()
     const hours = Math.floor(diff / (1000 * 60 * 60))
     
-    if (hours < 1) return 'Just now'
-    if (hours < 24) return `${hours}h ago`
+    if (hours < 1) return t('time.justNow')
+    if (hours < 24) return `${hours}${t('time.hoursAgo')}`
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
@@ -82,7 +84,7 @@ export function FeaturedCard({ news, onSave, isSaved = false }: FeaturedCardProp
           >
             <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-accent text-accent-foreground text-sm font-semibold shadow-lg">
               <TrendingUp className="h-4 w-4" />
-              Featured Story
+              {t('home.featuredStory')}
             </div>
           </motion.div>
 
@@ -94,7 +96,7 @@ export function FeaturedCard({ news, onSave, isSaved = false }: FeaturedCardProp
             className="absolute bottom-6 left-6 z-10 flex items-center gap-2 text-sm text-white/90"
           >
             <Eye className="h-4 w-4" />
-            <span>{formatViews(views)} views</span>
+            <span>{formatViews(views)} {t('article.views')}</span>
           </motion.div>
         </div>
 
@@ -154,7 +156,7 @@ export function FeaturedCard({ news, onSave, isSaved = false }: FeaturedCardProp
           >
             <a href={articleUrl} target="_blank" rel="noopener noreferrer">
               <Button variant="hero" size="lg" className="gap-2 btn-depth">
-                Read Full Story
+                {t('article.readFullStory')}
                 <ExternalLink className="h-4 w-4" />
               </Button>
             </a>
@@ -184,7 +186,7 @@ export function FeaturedCard({ news, onSave, isSaved = false }: FeaturedCardProp
                   exit={{ opacity: 0 }}
                   className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-primary text-primary-foreground text-xs whitespace-nowrap shadow-lg"
                 >
-                  Saved!
+                  {t('article.saved')}!
                 </motion.span>
               )}
             </motion.button>

@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Search, Bookmark, WifiOff, RefreshCw } from 'lucide-react'
 import { Button } from './ui/button'
 import { Link } from 'react-router-dom'
+import { useLanguage } from '@/lib/LanguageContext'
 
 interface EmptyStateProps {
   type: 'no-results' | 'no-saved' | 'error'
@@ -16,23 +17,25 @@ const iconMap = {
   'error': WifiOff
 }
 
-const defaultContent = {
-  'no-results': {
-    title: 'No stories found',
-    description: 'Try adjusting your filters or check back later for new content.'
-  },
-  'no-saved': {
-    title: 'No saved articles yet',
-    description: 'Start exploring and save articles that interest you. They\'ll appear here for easy access.'
-  },
-  'error': {
-    title: 'Something went wrong',
-    description: 'We couldn\'t load the content. Please check your connection and try again.'
-  }
-}
-
 export function EmptyState({ type, title, description, onRetry }: EmptyStateProps) {
+  const { t } = useLanguage()
   const Icon = iconMap[type]
+  
+  const defaultContent = {
+    'no-results': {
+      title: t('empty.noResults'),
+      description: t('empty.noResultsDesc')
+    },
+    'no-saved': {
+      title: t('empty.noSaved'),
+      description: t('empty.noSavedDesc')
+    },
+    'error': {
+      title: t('empty.error'),
+      description: t('empty.errorDesc')
+    }
+  }
+  
   const content = defaultContent[type]
   
   return (
@@ -100,21 +103,21 @@ export function EmptyState({ type, title, description, onRetry }: EmptyStateProp
         {type === 'error' && onRetry && (
           <Button onClick={onRetry} variant="hero" size="lg" className="gap-2">
             <RefreshCw className="h-4 w-4" />
-            Try Again
+            {t('common.tryAgain')}
           </Button>
         )}
         
         {type === 'no-saved' && (
           <Link to="/">
             <Button variant="hero" size="lg">
-              Explore News
+              {t('empty.exploreNews')}
             </Button>
           </Link>
         )}
         
         {type === 'no-results' && (
           <Button variant="outline" size="lg">
-            Clear Filters
+            {t('empty.clearFilters')}
           </Button>
         )}
       </motion.div>

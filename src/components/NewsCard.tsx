@@ -3,6 +3,7 @@ import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { Bookmark, BookmarkCheck, ExternalLink, Clock, Sparkles, Eye } from 'lucide-react'
 import { Button } from './ui/button'
 import { MediaFrame } from './MediaFrame'
+import { useLanguage } from '@/lib/LanguageContext'
 
 export interface NewsItem {
   _id?: string
@@ -29,6 +30,7 @@ interface NewsCardProps {
 }
 
 export function NewsCard({ news, index, onSave, isSaved = false, featured = false }: NewsCardProps) {
+  const { t } = useLanguage()
   const [saved, setSaved] = useState(isSaved)
   const [showSaveConfirm, setShowSaveConfirm] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
@@ -78,8 +80,8 @@ export function NewsCard({ news, index, onSave, isSaved = false, featured = fals
     const diff = now.getTime() - date.getTime()
     const hours = Math.floor(diff / (1000 * 60 * 60))
     
-    if (hours < 1) return 'Just now'
-    if (hours < 24) return `${hours}h ago`
+    if (hours < 1) return t('time.justNow')
+    if (hours < 24) return `${hours}${t('time.hoursAgo')}`
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
@@ -139,7 +141,7 @@ export function NewsCard({ news, index, onSave, isSaved = false, featured = fals
             className="absolute top-4 left-32 z-10"
           >
             <span className="px-2 py-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-medium flex items-center gap-1">
-              🔥 Trending
+              🔥 {t('article.trending')}
             </span>
           </motion.div>
         )}
@@ -187,7 +189,7 @@ export function NewsCard({ news, index, onSave, isSaved = false, featured = fals
           animate={{ opacity: showSaveConfirm ? 1 : 0, y: showSaveConfirm ? 0 : 10 }}
           className="absolute top-16 right-4 z-10 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-medium shadow-lg"
         >
-          Saved!
+          {t('article.saved')}!
         </motion.div>
       </div>
 
@@ -238,7 +240,7 @@ export function NewsCard({ news, index, onSave, isSaved = false, featured = fals
             size={featured ? 'lg' : 'sm'} 
             className="gap-2 btn-depth group/btn"
           >
-            <span>Read Article</span>
+            <span>{t('article.readArticle')}</span>
             <ExternalLink className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
           </Button>
         </a>

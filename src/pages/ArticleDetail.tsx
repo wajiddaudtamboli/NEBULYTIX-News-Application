@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { toggleSaveArticle, fetchSavedArticles } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
+import { useLanguage } from '@/lib/LanguageContext'
 
 interface Article {
   _id: string
@@ -38,6 +39,7 @@ export default function ArticleDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user, isSignedIn } = useUser()
+  const { t } = useLanguage()
   
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
@@ -103,12 +105,12 @@ export default function ArticleDetail() {
 
     if (result.success) {
       toast({
-        title: isSaved ? 'Removed from saved' : 'Article saved!',
+        title: isSaved ? t('article.removedFromSaved') : t('article.articleSaved'),
       })
     } else {
       setIsSaved(isSaved)
       toast({
-        title: 'Failed to save article',
+        title: t('article.failedToSave'),
         variant: 'destructive'
       })
     }
@@ -127,7 +129,7 @@ export default function ArticleDetail() {
       }
     } else {
       await navigator.clipboard.writeText(window.location.href)
-      toast({ title: 'Link copied to clipboard!' })
+      toast({ title: t('article.linkCopied') })
     }
   }
 
@@ -157,12 +159,12 @@ export default function ArticleDetail() {
   if (error || !article) {
     return (
       <div className="min-h-screen pt-24 flex flex-col items-center justify-center">
-        <h1 className="text-2xl font-bold mb-4">Article not found</h1>
-        <p className="text-muted-foreground mb-6">{error || 'The article you\'re looking for doesn\'t exist.'}</p>
+        <h1 className="text-2xl font-bold mb-4">{t('article.notFound')}</h1>
+        <p className="text-muted-foreground mb-6">{error || t('article.notFoundDesc')}</p>
         <Link to="/">
           <Button>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Feed
+            {t('saved.backToFeed')}
           </Button>
         </Link>
       </div>
@@ -190,7 +192,7 @@ export default function ArticleDetail() {
           <Link to="/">
             <Button variant="secondary" size="sm" className="gap-2 backdrop-blur-sm bg-background/80">
               <ArrowLeft className="h-4 w-4" />
-              Back
+              {t('common.back')}
             </Button>
           </Link>
         </div>
@@ -211,11 +213,11 @@ export default function ArticleDetail() {
                 {article.category}
               </Badge>
               {article.isFeatured && (
-                <Badge variant="secondary">⭐ Featured</Badge>
+                <Badge variant="secondary">⭐ {t('article.featured')}</Badge>
               )}
               {article.isTrending && (
                 <Badge variant="destructive" className="bg-gradient-to-r from-orange-500 to-red-500">
-                  🔥 Trending
+                  🔥 {t('article.trending')}
                 </Badge>
               )}
             </div>
@@ -236,7 +238,7 @@ export default function ArticleDetail() {
               <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50" />
               <span className="flex items-center gap-1.5">
                 <Eye className="h-4 w-4" />
-                {formatViews(article.views)} views
+                {formatViews(article.views)} {t('article.views')}
               </span>
             </div>
 
@@ -274,19 +276,19 @@ export default function ArticleDetail() {
                 {isSaved ? (
                   <>
                     <BookmarkCheck className="h-4 w-4" />
-                    Saved
+                    {t('article.saved')}
                   </>
                 ) : (
                   <>
                     <Bookmark className="h-4 w-4" />
-                    Save Article
+                    {t('article.saveArticle')}
                   </>
                 )}
               </Button>
 
               <Button onClick={handleShare} variant="outline" className="gap-2">
                 <Share2 className="h-4 w-4" />
-                Share
+                {t('article.share')}
               </Button>
 
               {/* External link to source */}
@@ -297,7 +299,7 @@ export default function ArticleDetail() {
               >
                 <Button variant="ghost" className="gap-2">
                   <ExternalLink className="h-4 w-4" />
-                  Find on Web
+                  {t('article.findOnWeb')}
                 </Button>
               </a>
             </div>

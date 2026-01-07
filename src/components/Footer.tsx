@@ -1,20 +1,22 @@
 import { motion } from 'framer-motion'
 import { Github, Twitter, Linkedin, Heart, Mail } from 'lucide-react'
+import { useLanguage } from '@/lib/LanguageContext'
 
 export function Footer() {
+  const { t } = useLanguage()
   const year = new Date().getFullYear()
 
   const socialLinks = [
     { icon: Twitter, label: 'Twitter', href: '#' },
     { icon: Github, label: 'GitHub', href: '#' },
     { icon: Linkedin, label: 'LinkedIn', href: '#' },
-    { icon: Mail, label: 'Contact', href: '#' }
+    { icon: Mail, label: t('footer.contact'), href: '#' }
   ]
 
   const footerLinks = [
-    { label: 'About', href: '#' },
-    { label: 'Privacy', href: '#' },
-    { label: 'Terms', href: '#' }
+    { label: t('footer.about'), href: '#' },
+    { label: t('footer.privacy'), href: '#' },
+    { label: t('footer.terms'), href: '#' }
   ]
 
   return (
@@ -43,7 +45,7 @@ export function Footer() {
             </div>
             
             <p className="text-sm text-muted-foreground text-center md:text-left max-w-xs">
-              Your gateway to the stories that shape our world. Stay informed, stay ahead.
+              {t('footer.tagline')}
             </p>
           </div>
 
@@ -81,18 +83,18 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-10 pt-6 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            © {year} NEBULYTIX NEWS. All rights reserved.
+            © {year} NEBULYTIX NEWS. {t('footer.allRightsReserved')}
           </p>
           
           <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            Made with 
+            {t('footer.madeWith')} 
             <motion.span
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 1, repeat: Infinity }}
             >
               <Heart className="h-3.5 w-3.5 text-destructive fill-destructive" />
             </motion.span>
-            for the curious minds
+            {t('footer.forCuriousMinds')}
           </p>
         </div>
       </div>

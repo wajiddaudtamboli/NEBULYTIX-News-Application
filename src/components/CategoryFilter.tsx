@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { Filter } from 'lucide-react'
+import { useLanguage } from '@/lib/LanguageContext'
 
 interface CategoryFilterProps {
   categories: string[]
@@ -8,11 +9,26 @@ interface CategoryFilterProps {
 }
 
 export function CategoryFilter({ categories, selected, onSelect }: CategoryFilterProps) {
+  const { t } = useLanguage()
+  
+  // Map category names to translation keys
+  const getCategoryLabel = (category: string) => {
+    const categoryMap: Record<string, string> = {
+      'All': t('categories.all'),
+      'Technology': t('categories.technology'),
+      'Business': t('categories.business'),
+      'Science': t('categories.science'),
+      'World': t('categories.world'),
+      'Health': t('categories.health'),
+    }
+    return categoryMap[category] || category
+  }
+  
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground mr-2">
         <Filter className="h-4 w-4" />
-        <span>Filter:</span>
+        <span>{t('common.filter')}:</span>
       </div>
       
       <div className="flex flex-wrap gap-2">
@@ -37,7 +53,7 @@ export function CategoryFilter({ categories, selected, onSelect }: CategoryFilte
                 }
               `}
             >
-              {category}
+              {getCategoryLabel(category)}
               
               {/* Active indicator dot */}
               {isSelected && (

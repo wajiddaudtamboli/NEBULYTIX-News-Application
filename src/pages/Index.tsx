@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { fetchNews, fetchFeaturedNews, fetchTrendingNews, toggleSaveArticle, fetchSavedArticles, syncUser } from '@/lib/api'
 import { mockNews, categories } from '@/data/mockNews'
 import { toast } from '@/hooks/use-toast'
+import { useLanguage } from '@/lib/LanguageContext'
 
 interface NewsItem {
   _id: string
@@ -34,6 +35,7 @@ interface NewsItem {
 
 export default function Index() {
   const { user, isSignedIn } = useUser()
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
@@ -239,7 +241,7 @@ export default function Index() {
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
               </span>
               <Zap className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold">Live Updates</span>
+              <span className="text-sm font-semibold">{t('home.liveUpdates')}</span>
             </motion.div>
 
             {/* Main headline */}
@@ -270,7 +272,7 @@ export default function Index() {
               transition={{ delay: 0.6 }}
               className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed"
             >
-              Stay ahead with real-time insights. Your gateway to the stories that shape our world.
+              {t('home.subtitle')}
             </motion.p>
 
             {/* CTA buttons */}
@@ -287,11 +289,11 @@ export default function Index() {
                 onClick={scrollToNews}
               >
                 <TrendingUp className="h-5 w-5" />
-                Explore Trending
+                {t('home.exploreTrending')}
               </Button>
               <Button variant="glass" size="xl" className="min-w-[200px]">
                 <Sparkles className="h-5 w-5 mr-2" />
-                Subscribe Free
+                {t('home.subscribeFree')}
               </Button>
             </motion.div>
           </motion.div>
@@ -308,7 +310,7 @@ export default function Index() {
           }}
           className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
         >
-          <span className="text-xs font-medium">Scroll to explore</span>
+          <span className="text-xs font-medium">{t('home.scrollToExplore')}</span>
           <ChevronDown className="h-5 w-5" />
         </motion.button>
 
@@ -339,13 +341,13 @@ export default function Index() {
               viewport={{ once: true }}
             >
               <TrendingUp className="h-3 w-3" />
-              {isToday(selectedDate) ? 'Latest Stories' : `News from ${format(selectedDate, 'MMM d, yyyy')}`}
+              {isToday(selectedDate) ? t('home.latestStories') : `${t('home.newsFrom')} ${format(selectedDate, 'MMM d, yyyy')}`}
             </motion.div>
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-2">
-              Curated For You
+              {t('home.curatedForYou')}
             </h2>
             <p className="text-muted-foreground text-lg">
-              Handpicked news from trusted sources worldwide
+              {t('home.handpickedNews')}
             </p>
           </div>
 
@@ -355,7 +357,7 @@ export default function Index() {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="gap-2 min-w-[180px]">
                   <CalendarIcon className="h-4 w-4" />
-                  {isToday(selectedDate) ? 'Today' : format(selectedDate, 'MMM d, yyyy')}
+                  {isToday(selectedDate) ? t('common.today') : format(selectedDate, 'MMM d, yyyy')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="end">
@@ -436,7 +438,7 @@ export default function Index() {
                 <div className="h-5 w-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
               ) : (
                 <>
-                  Load More Stories
+                  {t('home.loadMore')}
                   <ChevronDown className="h-4 w-4" />
                 </>
               )}

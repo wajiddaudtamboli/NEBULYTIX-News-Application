@@ -12,6 +12,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
+import LanguageSelector from './LanguageSelector'
+import { useLanguage } from '@/lib/LanguageContext'
 
 interface NavbarProps {
   theme: 'light' | 'dark'
@@ -25,14 +27,15 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
   const location = useLocation()
   const { isSignedIn, user } = useUser()
   const { signOut } = useClerk()
+  const { t } = useLanguage()
   
   const { scrollY } = useScroll()
   const bgOpacity = useTransform(scrollY, [0, 100], [0.7, 0.95])
   const blur = useTransform(scrollY, [0, 100], [12, 20])
 
   const navLinks = [
-    { path: '/', label: 'Home', icon: Home },
-    { path: '/saved', label: 'Saved', icon: Bookmark },
+    { path: '/', label: t('nav.home'), icon: Home },
+    { path: '/saved', label: t('nav.saved'), icon: Bookmark },
   ]
 
   const isActive = (path: string) => location.pathname === path
@@ -138,6 +141,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
 
           {/* Right section */}
           <div className="relative flex items-center gap-2 sm:gap-3">
+            <LanguageSelector />
             <ThemeToggle theme={theme} onToggle={onToggleTheme} />
             
             {isSignedIn && user ? (
@@ -166,13 +170,13 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
                   <DropdownMenuItem asChild>
                     <Link to="/saved" className="flex items-center gap-2">
                       <Bookmark className="h-4 w-4" />
-                      Saved News
+                      {t('nav.saved')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/admin" className="flex items-center gap-2">
                       <Settings className="h-4 w-4" />
-                      Admin Panel
+                      {t('nav.admin')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -181,7 +185,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
                     className="text-red-600 cursor-pointer"
                   >
                     <LogOut className="h-4 w-4 mr-2" />
-                    Sign Out
+                    {t('nav.logout')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -190,7 +194,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button variant="hero" size="sm" className="gap-2 btn-depth">
                     <LogIn className="h-4 w-4" />
-                    Sign In
+                    {t('nav.login')}
                   </Button>
                 </motion.div>
               </Link>
@@ -270,7 +274,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
                   <Link to="/login">
                     <Button variant="hero" className="w-full gap-2 h-12">
                       <LogIn className="h-5 w-5" />
-                      Sign In
+                      {t('nav.login')}
                     </Button>
                   </Link>
                 </motion.div>

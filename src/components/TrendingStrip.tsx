@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { TrendingUp, ChevronLeft, ChevronRight, Flame, Eye } from 'lucide-react'
 import { Button } from './ui/button'
 import { ScrollArea, ScrollBar } from './ui/scroll-area'
+import { useLanguage } from '@/lib/LanguageContext'
 
 interface NewsItem {
   _id: string
@@ -22,6 +23,7 @@ interface TrendingStripProps {
 }
 
 export function TrendingStrip({ news, onSave, savedIds }: TrendingStripProps) {
+  const { t } = useLanguage()
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const scroll = (direction: 'left' | 'right') => {
@@ -48,8 +50,8 @@ export function TrendingStrip({ news, onSave, savedIds }: TrendingStripProps) {
               <Flame className="h-5 w-5 text-white" />
             </motion.div>
             <div>
-              <h3 className="font-display font-bold text-xl">Trending Now</h3>
-              <p className="text-sm text-muted-foreground">Hot stories everyone is reading</p>
+              <h3 className="font-display font-bold text-xl">{t('home.trendingNow')}</h3>
+              <p className="text-sm text-muted-foreground">{t('home.hotStories')}</p>
             </div>
           </div>
 

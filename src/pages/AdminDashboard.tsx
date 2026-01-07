@@ -18,6 +18,7 @@ import { AdminNewsTable } from '@/components/admin/AdminNewsTable'
 import { CreateNewsModal } from '@/components/admin/CreateNewsModal'
 import { verifyAdminToken, adminGetStats, clearAdminToken, getAdminToken } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
+import { useLanguage } from '@/lib/LanguageContext'
 
 interface Stats {
   totalNews: number
@@ -36,6 +37,7 @@ interface AdminData {
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -98,31 +100,31 @@ export default function AdminDashboard() {
 
   const handleLogout = () => {
     clearAdminToken()
-    toast({ title: 'Logged out successfully' })
+    toast({ title: t('admin.logoutSuccess') })
     navigate('/admin/login')
   }
 
   const statCards = [
     {
-      title: 'Total News',
+      title: t('admin.totalNews'),
       value: stats?.totalNews || 0,
       icon: Newspaper,
       color: 'from-blue-500 to-cyan-500',
     },
     {
-      title: 'Featured',
+      title: t('admin.featured'),
       value: stats?.featuredNews || 0,
       icon: Star,
       color: 'from-yellow-500 to-orange-500',
     },
     {
-      title: 'Trending',
+      title: t('admin.trending'),
       value: stats?.trendingNews || 0,
       icon: TrendingUp,
       color: 'from-pink-500 to-rose-500',
     },
     {
-      title: 'Total Views',
+      title: t('admin.totalViews'),
       value: stats?.totalViews?.toLocaleString() || '0',
       icon: Eye,
       color: 'from-purple-500 to-indigo-500',
@@ -134,7 +136,7 @@ export default function AdminDashboard() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground">Loading dashboard...</p>
+          <p className="text-muted-foreground">{t('common.loading')}...</p>
         </div>
       </div>
     )
@@ -144,10 +146,10 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold">Access Denied</h1>
-          <p className="text-muted-foreground">Please login to access the admin panel.</p>
+          <h1 className="text-2xl font-bold">{t('admin.accessDenied')}</h1>
+          <p className="text-muted-foreground">{t('admin.pleaseLogin')}</p>
           <Button onClick={() => navigate('/admin/login')}>
-            Go to Login
+            {t('admin.goToLogin')}
           </Button>
         </div>
       </div>
@@ -165,9 +167,9 @@ export default function AdminDashboard() {
         >
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="font-display text-3xl sm:text-4xl font-bold mb-2">Admin Dashboard</h1>
+              <h1 className="font-display text-3xl sm:text-4xl font-bold mb-2">{t('admin.dashboard')}</h1>
               <p className="text-muted-foreground">
-                Welcome back, <span className="text-foreground font-medium">{admin.name}</span>
+                {t('admin.welcomeBack')}, <span className="text-foreground font-medium">{admin.name}</span>
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -184,13 +186,13 @@ export default function AdminDashboard() {
                 className="gap-2"
               >
                 <Plus className="h-4 w-4" />
-                Add News
+                {t('admin.addNews')}
               </Button>
               <Button 
                 variant="ghost" 
                 size="icon"
                 onClick={handleLogout}
-                title="Logout"
+                title={t('nav.logout')}
               >
                 <LogOut className="h-4 w-4" />
               </Button>
@@ -236,7 +238,7 @@ export default function AdminDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5" />
-                  Category Distribution
+                  {t('admin.categoryDistribution')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
