@@ -7,10 +7,14 @@
   "functions": {
     "api/*.ts": {
       "memory": 1024,
-      "maxDuration": 10
+      "maxDuration": 30
     }
   },
   "rewrites": [
+    {
+      "source": "/api/v1/health",
+      "destination": "/api/health"
+    },
     {
       "source": "/api/v1/auth/admin/login",
       "destination": "/api/auth?action=login"

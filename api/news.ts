@@ -27,9 +27,10 @@ const connectDB = async (retries = 3): Promise<typeof mongoose> => {
         
         const conn = await mongoose.connect(mongoUri, {
           bufferCommands: false,
-          maxPoolSize: 10,
-          serverSelectionTimeoutMS: 10000,
-          socketTimeoutMS: 45000,
+          maxPoolSize: 5,
+          serverSelectionTimeoutMS: 5000,
+          socketTimeoutMS: 20000,
+          connectTimeoutMS: 5000,
         });
         
         cachedConnection = conn;

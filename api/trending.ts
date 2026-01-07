@@ -5,7 +5,7 @@ import mongoose, { Model, Document } from 'mongoose';
 let cachedConnection: typeof mongoose | null = null;
 let connectionPromise: Promise<typeof mongoose> | null = null;
 
-const connectDB = async (): Promise<typeof mongoose> => {
+const connectDB = async (retries = 2): Promise<typeof mongoose> => {
   if (cachedConnection && mongoose.connection.readyState === 1) {
     return cachedConnection;
   }
@@ -18,11 +18,34 @@ const connectDB = async (): Promise<typeof mongoose> => {
   if (!mongoUri) throw new Error('MONGODB_URI is not set');
   
   connectionPromise = (async () => {
-    mongoose.set('bufferCommands', false);
-    const conn = await mongoose.connect(mongoUri, { bufferCommands: false });
-    cachedConnection = conn;
-    connectionPromise = null;
-    return conn;
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        mongoose.set('bufferCommands', false);
+        mongoose.set('strictQuery', true);
+        
+        const conn = await mongoose.connect(mongoUri, {
+          bufferCommands: false,
+          maxPoolSize: 5,
+          serverSelectionTimeoutMS: 5000,
+          socketTimeoutMS: 20000,
+          connectTimeoutMS: 5000,
+        });
+        
+        cachedConnection = conn;
+        connectionPromise = null;
+        return conn;
+      } catch (error) {
+        console.error(`MongoDB connection attempt ${attempt}/${retries} failed:`, error);
+        
+        if (attempt === retries) {
+          connectionPromise = null;
+          throw new Error(`MongoDB connection failed after ${retries} attempts`);
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+    throw new Error('MongoDB connection failed');
   })();
   
   return connectionPromise;
@@ -73,6 +96,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .lean();
     res.status(200).json({ success: true, data: trending });
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Server error' });
+    console.error('Trending API error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Database connection error',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 }
