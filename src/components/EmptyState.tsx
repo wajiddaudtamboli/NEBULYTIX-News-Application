@@ -54,7 +54,7 @@ export function EmptyState({ type, title, description, onRetry }: EmptyStateProp
       >
         {/* Glow rings */}
         <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse-ring" />
-        <div className="absolute inset-0 rounded-full bg-primary/5 animate-pulse-ring" style={{ animationDelay: '0.5s' }} />
+        <div className="absolute inset-0 rounded-full bg-primary/5 animate-pulse-ring-delayed" />
         
         {/* Icon circle */}
         <div className="relative h-24 w-24 rounded-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center border border-border/50 shadow-lg">

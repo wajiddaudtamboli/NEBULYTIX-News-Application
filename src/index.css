@@ -354,6 +354,26 @@
     animation: pulseGlow 3s ease-in-out infinite;
   }
 
+  .animate-pulse-glow-delayed {
+    animation: pulseGlow 3s ease-in-out infinite;
+    animation-delay: 1s;
+  }
+
+  .animate-pulse-ring-delayed {
+    animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    animation-delay: 0.5s;
+  }
+
+  /* Scrollbar hide utility */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   .animate-gradient {
     background-size: 200% 200%;
     animation: gradientShift 8s ease infinite;

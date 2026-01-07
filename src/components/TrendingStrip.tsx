@@ -78,7 +78,6 @@ export function TrendingStrip({ news, onSave, savedIds }: TrendingStripProps) {
         <div
           ref={scrollRef}
           className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4 snap-x snap-mandatory"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {news.map((item, index) => (
             <motion.article
