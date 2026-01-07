@@ -5,7 +5,7 @@ import mongoose, { Model, Document } from 'mongoose';
 let cachedConnection: typeof mongoose | null = null;
 let connectionPromise: Promise<typeof mongoose> | null = null;
 
-const connectDB = async (retries = 3): Promise<typeof mongoose> => {
+const connectDB = async (retries = 2): Promise<typeof mongoose> => {
   if (cachedConnection && mongoose.connection.readyState === 1) {
     return cachedConnection;
   }
@@ -16,7 +16,7 @@ const connectDB = async (retries = 3): Promise<typeof mongoose> => {
   
   const mongoUri = process.env.MONGODB_URI;
   if (!mongoUri) {
-    throw new Error('MONGODB_URI environment variable is not set');
+    throw new Error('MONGODB_URI not configured');
   }
 
   connectionPromise = (async () => {
@@ -27,10 +27,10 @@ const connectDB = async (retries = 3): Promise<typeof mongoose> => {
         
         const conn = await mongoose.connect(mongoUri, {
           bufferCommands: false,
-          maxPoolSize: 5,
-          serverSelectionTimeoutMS: 5000,
-          socketTimeoutMS: 20000,
-          connectTimeoutMS: 5000,
+          maxPoolSize: 3,
+          serverSelectionTimeoutMS: 4000,
+          socketTimeoutMS: 15000,
+          connectTimeoutMS: 4000,
         });
         
         cachedConnection = conn;
