@@ -4,22 +4,32 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 // MongoDB Connection Cache
-let isConnected = false;
+let cachedConnection: typeof mongoose | null = null;
 
 const connectDB = async () => {
-  if (isConnected) return;
+  if (cachedConnection) {
+    return cachedConnection;
+  }
   
   const mongoUri = process.env.MONGODB_URI;
   if (!mongoUri) {
-    throw new Error('MONGODB_URI is not set');
+    throw new Error('MONGODB_URI environment variable is not set');
   }
 
   try {
-    await mongoose.connect(mongoUri);
-    isConnected = true;
+    // Set mongoose options for serverless
+    mongoose.set('bufferCommands', false);
+    
+    const conn = await mongoose.connect(mongoUri, {
+      bufferCommands: false,
+    });
+    
+    cachedConnection = conn;
+    console.log('MongoDB connected successfully');
+    return conn;
   } catch (error) {
     console.error('MongoDB connection error:', error);
-    throw error;
+    throw new Error(`MongoDB connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
 
@@ -113,67 +123,75 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
 
 // Handle Setup (create first admin)
 async function handleSetup(req: VercelRequest, res: VercelResponse) {
-  const { email, password, name, setupKey } = req.body;
+  try {
+    const { email, password, name, setupKey } = req.body;
 
-  // Validate setup key
-  if (setupKey !== SETUP_KEY) {
-    return res.status(403).json({
-      success: false,
-      message: 'Invalid setup key',
+    // Validate setup key
+    if (setupKey !== SETUP_KEY) {
+      return res.status(403).json({
+        success: false,
+        message: `Invalid setup key. Expected: ${SETUP_KEY}`,
+      });
+    }
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required',
+      });
+    }
+
+    // Check if admin already exists with this email
+    const existingAdmin = await Admin.findOne({ email: email.toLowerCase() });
+    if (existingAdmin) {
+      return res.status(409).json({
+        success: false,
+        message: 'Admin with this email already exists. Please use Login instead.',
+      });
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(12);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create admin
+    const admin = new Admin({
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      name: name || 'Admin',
+      role: 'superadmin',
+      isActive: true,
     });
-  }
 
-  if (!email || !password) {
-    return res.status(400).json({
-      success: false,
-      message: 'Email and password are required',
-    });
-  }
+    await admin.save();
 
-  // Check if admin already exists
-  const existingAdmin = await Admin.findOne({ email: email.toLowerCase() });
-  if (existingAdmin) {
-    return res.status(409).json({
-      success: false,
-      message: 'Admin with this email already exists',
-    });
-  }
+    // Generate token
+    const token = jwt.sign(
+      { id: admin._id, email: admin.email, role: admin.role },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
-  // Hash password
-  const salt = await bcrypt.genSalt(12);
-  const hashedPassword = await bcrypt.hash(password, salt);
-
-  // Create admin
-  const admin = new Admin({
-    email: email.toLowerCase(),
-    password: hashedPassword,
-    name: name || 'Admin',
-    role: 'superadmin',
-    isActive: true,
-  });
-
-  await admin.save();
-
-  // Generate token
-  const token = jwt.sign(
-    { id: admin._id, email: admin.email, role: admin.role },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-
-  res.status(201).json({
-    success: true,
-    message: 'Admin created successfully',
-    data: {
-      token,
-      admin: {
-        id: admin._id,
-        email: admin.email,
-        name: admin.name,
-        role: admin.role,
+    res.status(201).json({
+      success: true,
+      message: 'Admin created successfully',
+      data: {
+        token,
+        admin: {
+          id: admin._id,
+          email: admin.email,
+          name: admin.name,
+          role: admin.role,
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error('Setup error:', error);
+    res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to create admin',
+    });
+  }
 }
 
 // Handle Verify Token

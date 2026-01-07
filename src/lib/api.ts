@@ -369,7 +369,7 @@ export async function adminSetup(email: string, password: string, name: string, 
     return data
   } catch (error) {
     console.error('Admin setup failed:', error)
-    return { success: false, message: 'Setup failed' }
+    return { success: false, message: error instanceof Error ? error.message : 'Network error - please check your connection' }
   }
 }
 
