@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion'
-import { Linkedin, Heart, Mail, MapPin, Globe, Building2 } from 'lucide-react'
+import { Linkedin, Mail, MapPin, Globe, Building2 } from 'lucide-react'
 import { useLanguage } from '@/lib/LanguageContext'
 
-const LOGO_URL = 'https://drive.google.com/uc?export=view&id=1gB3bPG_ri6vfMqY5eOWR2HKqG486HzVT'
+const LOGO_URL = 'https://res.cloudinary.com/duhhsnbwh/image/upload/v1767754134/Logo-removebg-preview_v6ncki.png'
 
 export function Footer() {
   const { t } = useLanguage()
@@ -161,15 +161,8 @@ export function Footer() {
             © {year} Nebulytix Technologies Pvt. Ltd. {t('footer.allRightsReserved')}
           </p>
           
-          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            {t('footer.madeWith')} 
-            <motion.span
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
-            >
-              <Heart className="h-3.5 w-3.5 text-destructive fill-destructive" />
-            </motion.span>
-            by <span className="font-medium text-primary">Wajid Daud Tamboli</span>
+          <p className="text-sm text-muted-foreground">
+            Developer - <span className="font-medium text-primary">Wajid Daud Tamboli</span> - 9667033839
           </p>
         </div>
       </div>
