@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
-import { Menu, X, Bookmark, Home, LogIn, Sparkles, Settings, LogOut, User } from 'lucide-react'
+import { Menu, X, Bookmark, Home, LogIn, Sparkles, Settings, LogOut, User, Shield } from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
 import { Button } from './ui/button'
 import { Link, useLocation } from 'react-router-dom'
@@ -145,6 +145,20 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
             <LanguageSelector />
             <ThemeToggle theme={theme} onToggle={onToggleTheme} />
             
+            {/* Admin Button - Always Visible */}
+            <Link to="/admin/login" className="hidden md:block">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button 
+                  variant={location.pathname.startsWith('/admin') ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="gap-2"
+                >
+                  <Shield className="h-4 w-4" />
+                  {t('nav.admin')}
+                </Button>
+              </motion.div>
+            </Link>
+            
             {isSignedIn && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -172,12 +186,6 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
                     <Link to="/saved" className="flex items-center gap-2">
                       <Bookmark className="h-4 w-4" />
                       {t('nav.saved')}
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin" className="flex items-center gap-2">
-                      <Settings className="h-4 w-4" />
-                      {t('nav.admin')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -270,8 +278,19 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="pt-2 border-t border-border/50"
+                  className="pt-2 border-t border-border/50 space-y-2"
                 >
+                  {/* Admin Button - Always Visible in Mobile */}
+                  <Link to="/admin/login">
+                    <Button 
+                      variant={location.pathname.startsWith('/admin') ? 'default' : 'outline'} 
+                      className="w-full gap-2 h-12"
+                    >
+                      <Shield className="h-5 w-5" />
+                      {t('nav.admin')}
+                    </Button>
+                  </Link>
+                  
                   <Link to="/login">
                     <Button variant="hero" className="w-full gap-2 h-12">
                       <LogIn className="h-5 w-5" />
