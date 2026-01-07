@@ -54,7 +54,8 @@ const newsSchema = new mongoose.Schema({
 
 // Use type assertion to fix TS2349
 const User = (mongoose.models.User || mongoose.model<IUser>('User', userSchema)) as Model<IUser>;
-mongoose.models.News || mongoose.model('News', newsSchema);
+const News = mongoose.models.News || mongoose.model('News', newsSchema);
+void News; // Prevent unused variable warning
 
 // Set CORS headers
 const setCorsHeaders = (res: VercelResponse) => {
