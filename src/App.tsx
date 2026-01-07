@@ -117,8 +117,12 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* Skip to main content - Accessibility */}
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <Navbar theme={theme} onToggleTheme={toggleTheme} />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1" role="main">
         <AnimatedRoutes />
       </main>
       <Footer />

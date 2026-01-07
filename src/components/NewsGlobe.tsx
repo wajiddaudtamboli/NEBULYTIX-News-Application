@@ -1,18 +1,38 @@
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useState, useEffect, Suspense, lazy } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Sphere, MeshDistortMaterial, Float, Stars } from '@react-three/drei'
 import * as THREE from 'three'
 
-function GlobeCore() {
+// Detect if device is low-end (for performance optimization)
+const isLowEndDevice = () => {
+  if (typeof window === 'undefined') return false
+  
+  // Check for low memory
+  const nav = navigator as Navigator & { deviceMemory?: number }
+  if (nav.deviceMemory && nav.deviceMemory < 4) return true
+  
+  // Check for mobile or low-end hardware
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  
+  // Check for reduced motion preference
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  
+  return isMobile || prefersReducedMotion
+}
+
+function GlobeCore({ isLowEnd }: { isLowEnd: boolean }) {
   const meshRef = useRef<THREE.Mesh>(null)
   const glowRef = useRef<THREE.Mesh>(null)
+  const rotationSpeed = isLowEnd ? 0.001 : 0.002
 
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y += 0.002
-      meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.3) * 0.1
+      meshRef.current.rotation.y += rotationSpeed
+      if (!isLowEnd) {
+        meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.3) * 0.1
+      }
     }
-    if (glowRef.current) {
+    if (glowRef.current && !isLowEnd) {
       glowRef.current.rotation.y -= 0.001
     }
   })
@@ -26,7 +46,8 @@ function GlobeCore() {
     ctx.fillStyle = 'transparent'
     ctx.fillRect(0, 0, 512, 256)
     
-    ctx.strokeStyle = 'rgba(34, 211, 238, 0.4)'
+    // Slightly reduced opacity for grid behind text
+    ctx.strokeStyle = 'rgba(34, 211, 238, 0.3)'
     ctx.lineWidth = 1
 
     for (let i = 0; i <= 512; i += 32) {
@@ -49,38 +70,44 @@ function GlobeCore() {
     return texture
   }, [])
 
+  const floatSettings = isLowEnd 
+    ? { speed: 1, rotationIntensity: 0.2, floatIntensity: 0.3 }
+    : { speed: 2, rotationIntensity: 0.4, floatIntensity: 0.6 }
+
   return (
-    <Float speed={2} rotationIntensity={0.4} floatIntensity={0.6}>
+    <Float {...floatSettings}>
       <group>
-        <Sphere ref={meshRef} args={[2, 64, 64]}>
+        <Sphere ref={meshRef} args={[2, isLowEnd ? 32 : 64, isLowEnd ? 32 : 64]}>
           <meshStandardMaterial
             map={gridTexture}
             transparent
-            opacity={0.9}
+            opacity={0.85}
             color="#0e7490"
             emissive="#22d3ee"
-            emissiveIntensity={0.15}
+            emissiveIntensity={0.12}
             roughness={0.3}
             metalness={0.7}
           />
         </Sphere>
 
-        <Sphere ref={glowRef} args={[2.1, 32, 32]}>
-          <MeshDistortMaterial
-            color="#22d3ee"
-            transparent
-            opacity={0.15}
-            distort={0.3}
-            speed={2}
-            roughness={0}
-          />
-        </Sphere>
+        {!isLowEnd && (
+          <Sphere ref={glowRef} args={[2.1, 32, 32]}>
+            <MeshDistortMaterial
+              color="#22d3ee"
+              transparent
+              opacity={0.12}
+              distort={0.3}
+              speed={2}
+              roughness={0}
+            />
+          </Sphere>
+        )}
 
         <Sphere args={[2.3, 16, 16]}>
           <meshBasicMaterial
             color="#a855f7"
             transparent
-            opacity={0.05}
+            opacity={0.04}
             side={THREE.BackSide}
           />
         </Sphere>
@@ -89,8 +116,8 @@ function GlobeCore() {
   )
 }
 
-function Particles() {
-  const count = 100
+function Particles({ isLowEnd }: { isLowEnd: boolean }) {
+  const count = isLowEnd ? 50 : 100
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3)
     for (let i = 0; i < count; i++) {
@@ -103,14 +130,17 @@ function Particles() {
       pos[i * 3 + 2] = r * Math.cos(phi)
     }
     return pos
-  }, [])
+  }, [count])
 
   const particlesRef = useRef<THREE.Points>(null)
+  const rotationSpeed = isLowEnd ? 0.0002 : 0.0005
 
   useFrame((state) => {
     if (particlesRef.current) {
-      particlesRef.current.rotation.y += 0.0005
-      particlesRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.1
+      particlesRef.current.rotation.y += rotationSpeed
+      if (!isLowEnd) {
+        particlesRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.1
+      }
     }
   })
 
@@ -128,29 +158,61 @@ function Particles() {
         size={0.05}
         color="#22d3ee"
         transparent
-        opacity={0.8}
+        opacity={0.7}
         sizeAttenuation
       />
     </points>
   )
 }
 
-export function NewsGlobe() {
+// Loading fallback for Suspense
+function GlobeLoader() {
   return (
-    <div className="absolute inset-0 opacity-80 pointer-events-none" style={{ zIndex: 0 }}>
-      <Canvas
-        camera={{ position: [0, 0, 7], fov: 45 }}
-        dpr={[1, 2]}
-        gl={{ antialias: true, alpha: true }}
-      >
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
-        <pointLight position={[-10, -10, -5]} color="#a855f7" intensity={0.5} />
-        
-        <GlobeCore />
-        <Particles />
-        <Stars radius={50} depth={50} count={1000} factor={4} fade speed={1} />
-      </Canvas>
+    <div className="absolute inset-0 flex items-center justify-center">
+      <div className="w-16 h-16 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+    </div>
+  )
+}
+
+export function NewsGlobe() {
+  const [isLowEnd, setIsLowEnd] = useState(false)
+  const [isVisible, setIsVisible] = useState(false)
+
+  useEffect(() => {
+    // Check device performance
+    setIsLowEnd(isLowEndDevice())
+    
+    // Lazy load the canvas after initial render
+    const timer = setTimeout(() => setIsVisible(true), 100)
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (!isVisible) {
+    return <GlobeLoader />
+  }
+
+  return (
+    <div className="absolute inset-0 opacity-75 pointer-events-none globe-container">
+      <Suspense fallback={<GlobeLoader />}>
+        <Canvas
+          camera={{ position: [0, 0, 7], fov: 45 }}
+          dpr={isLowEnd ? [1, 1.5] : [1, 2]}
+          gl={{ 
+            antialias: !isLowEnd, 
+            alpha: true,
+            powerPreference: isLowEnd ? 'low-power' : 'high-performance'
+          }}
+          frameloop={isLowEnd ? 'demand' : 'always'}
+        >
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[10, 10, 5]} intensity={1} />
+          <pointLight position={[-10, -10, -5]} color="#a855f7" intensity={0.5} />
+          
+          <GlobeCore isLowEnd={isLowEnd} />
+          <Particles isLowEnd={isLowEnd} />
+          <Stars radius={50} depth={50} count={isLowEnd ? 500 : 1000} factor={4} fade speed={isLowEnd ? 0.5 : 1} />
+        </Canvas>
+      </Suspense>
     </div>
   )
 }

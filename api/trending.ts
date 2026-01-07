@@ -1,15 +1,31 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import mongoose, { Model, Document } from 'mongoose';
 
-// MongoDB Connection Cache
-let isConnected = false;
+// MongoDB Connection Cache for serverless
+let cachedConnection: typeof mongoose | null = null;
+let connectionPromise: Promise<typeof mongoose> | null = null;
 
-const connectDB = async () => {
-  if (isConnected) return;
+const connectDB = async (): Promise<typeof mongoose> => {
+  if (cachedConnection && mongoose.connection.readyState === 1) {
+    return cachedConnection;
+  }
+  
+  if (connectionPromise) {
+    return connectionPromise;
+  }
+  
   const mongoUri = process.env.MONGODB_URI;
   if (!mongoUri) throw new Error('MONGODB_URI is not set');
-  await mongoose.connect(mongoUri);
-  isConnected = true;
+  
+  connectionPromise = (async () => {
+    mongoose.set('bufferCommands', false);
+    const conn = await mongoose.connect(mongoUri, { bufferCommands: false });
+    cachedConnection = conn;
+    connectionPromise = null;
+    return conn;
+  })();
+  
+  return connectionPromise;
 };
 
 // News Interface

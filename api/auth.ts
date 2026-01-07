@@ -3,34 +3,61 @@ import mongoose, { Model, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-// MongoDB Connection Cache
+// MongoDB Connection Cache for serverless
 let cachedConnection: typeof mongoose | null = null;
+let connectionPromise: Promise<typeof mongoose> | null = null;
 
-const connectDB = async () => {
-  if (cachedConnection) {
+const connectDB = async (retries = 3): Promise<typeof mongoose> => {
+  // Return cached connection if available and connected
+  if (cachedConnection && mongoose.connection.readyState === 1) {
     return cachedConnection;
+  }
+  
+  // Return existing connection promise if one is in progress
+  if (connectionPromise) {
+    return connectionPromise;
   }
   
   const mongoUri = process.env.MONGODB_URI;
   if (!mongoUri) {
-    throw new Error('MONGODB_URI environment variable is not set');
+    throw new Error('MONGODB_URI environment variable is not set. Please configure it in Vercel dashboard.');
   }
 
-  try {
-    // Set mongoose options for serverless
-    mongoose.set('bufferCommands', false);
-    
-    const conn = await mongoose.connect(mongoUri, {
-      bufferCommands: false,
-    });
-    
-    cachedConnection = conn;
-    console.log('MongoDB connected successfully');
-    return conn;
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    throw new Error(`MongoDB connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
+  connectionPromise = (async () => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        // Set mongoose options for serverless environment
+        mongoose.set('bufferCommands', false);
+        mongoose.set('strictQuery', true);
+        
+        const conn = await mongoose.connect(mongoUri, {
+          bufferCommands: false,
+          maxPoolSize: 10,
+          serverSelectionTimeoutMS: 10000,
+          socketTimeoutMS: 45000,
+        });
+        
+        cachedConnection = conn;
+        connectionPromise = null;
+        console.log(`MongoDB connected successfully (attempt ${attempt})`);
+        return conn;
+      } catch (error) {
+        console.error(`MongoDB connection attempt ${attempt}/${retries} failed:`, error);
+        
+        if (attempt === retries) {
+          connectionPromise = null;
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          throw new Error(`MongoDB connection failed after ${retries} attempts: ${errorMessage}`);
+        }
+        
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt), 10000)));
+      }
+    }
+    throw new Error('MongoDB connection failed');
+  })();
+
+  return connectionPromise;
 };
 
 // Admin Interface

@@ -210,20 +210,24 @@ export default function Index() {
       {/* Hero Section */}
       <motion.section 
         style={{ opacity: heroOpacity, scale: heroScale }}
-        className="relative min-h-[85vh] flex items-center justify-center overflow-hidden pt-20"
+        className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-20"
       >
         {/* Background elements */}
         <div className="absolute inset-0 bg-gradient-hero" />
-        <div className="absolute inset-0 bg-dots opacity-30" />
+        <div className="absolute inset-0 bg-dots opacity-20" />
         
-        {/* 3D Globe */}
+        {/* 3D Globe - Preserved with optimized opacity */}
         <NewsGlobe />
 
-        {/* Decorative blurs */}
-        <div className="absolute top-1/4 -left-20 w-72 h-72 rounded-full bg-primary/20 blur-[100px] animate-float" />
-        <div className="absolute bottom-1/4 -right-20 w-80 h-80 rounded-full bg-accent/15 blur-[120px] animate-float-delayed" />
+        {/* Enhanced text contrast overlay - subtle vignette effect */}
+        <div className="absolute inset-0 hero-text-overlay pointer-events-none" />
+        
+        {/* Decorative blurs - refined */}
+        <div className="absolute top-1/4 -left-20 w-72 h-72 rounded-full bg-primary/15 blur-[120px] animate-float" />
+        <div className="absolute bottom-1/4 -right-20 w-80 h-80 rounded-full bg-accent/12 blur-[130px] animate-float-delayed" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-primary/5 blur-[150px]" />
 
-        <div className="relative z-10 content-container text-center">
+        <div className="relative z-10 content-container text-center max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -244,57 +248,69 @@ export default function Index() {
               <span className="text-sm font-semibold">{t('home.liveUpdates')}</span>
             </motion.div>
 
-            {/* Main headline */}
-            <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tight">
+            {/* Main headline - Enhanced hierarchy */}
+            <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-8 tracking-tight">
               <motion.span 
-                className="text-gradient inline-block"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
+                className="text-gradient inline-block drop-shadow-2xl"
+                initial={{ opacity: 0, y: 30, filter: 'blur(10px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ delay: 0.4, duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
               >
                 NEBULYTIX
               </motion.span>
               <br />
               <motion.span 
-                className="text-foreground inline-block"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
+                className="text-foreground inline-block hero-text-shadow"
+                initial={{ opacity: 0, y: 30, filter: 'blur(10px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ delay: 0.5, duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
               >
                 NEWS
               </motion.span>
             </h1>
 
-            {/* Subtitle */}
+            {/* Subtitle - Improved readability */}
             <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.6 }}
+              className="text-lg md:text-xl lg:text-2xl text-foreground/80 max-w-2xl mx-auto mb-12 leading-relaxed font-medium hero-subtitle"
             >
               {t('home.subtitle')}
             </motion.p>
 
-            {/* CTA buttons */}
+            {/* CTA buttons - Enhanced prominence */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4"
+              transition={{ delay: 0.7, duration: 0.6 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6"
             >
-              <Button 
-                variant="hero" 
-                size="xl" 
-                className="gap-2 btn-depth min-w-[200px]"
-                onClick={scrollToNews}
+              <motion.div
+                whileHover={{ scale: 1.05, y: -3 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
               >
-                <TrendingUp className="h-5 w-5" />
-                {t('home.exploreTrending')}
-              </Button>
-              <Button variant="glass" size="xl" className="min-w-[200px]">
-                <Sparkles className="h-5 w-5 mr-2" />
-                {t('home.subscribeFree')}
-              </Button>
+                <Button 
+                  variant="hero" 
+                  size="xl" 
+                  className="gap-3 btn-depth min-w-[220px] cta-primary shadow-2xl"
+                  onClick={scrollToNews}
+                >
+                  <TrendingUp className="h-5 w-5" />
+                  {t('home.exploreTrending')}
+                </Button>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.03, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+              >
+                <Button variant="glass" size="xl" className="min-w-[220px] cta-secondary">
+                  <Sparkles className="h-5 w-5 mr-2" />
+                  {t('home.subscribeFree')}
+                </Button>
+              </motion.div>
             </motion.div>
           </motion.div>
         </div>

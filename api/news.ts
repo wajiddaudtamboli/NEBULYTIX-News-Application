@@ -1,24 +1,55 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import mongoose, { Model, Document } from 'mongoose';
 
-// MongoDB Connection Cache
-let isConnected = false;
+// MongoDB Connection Cache for serverless
+let cachedConnection: typeof mongoose | null = null;
+let connectionPromise: Promise<typeof mongoose> | null = null;
 
-const connectDB = async () => {
-  if (isConnected) return;
+const connectDB = async (retries = 3): Promise<typeof mongoose> => {
+  if (cachedConnection && mongoose.connection.readyState === 1) {
+    return cachedConnection;
+  }
+  
+  if (connectionPromise) {
+    return connectionPromise;
+  }
   
   const mongoUri = process.env.MONGODB_URI;
   if (!mongoUri) {
-    throw new Error('MONGODB_URI is not set');
+    throw new Error('MONGODB_URI environment variable is not set');
   }
 
-  try {
-    await mongoose.connect(mongoUri);
-    isConnected = true;
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    throw error;
-  }
+  connectionPromise = (async () => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        mongoose.set('bufferCommands', false);
+        mongoose.set('strictQuery', true);
+        
+        const conn = await mongoose.connect(mongoUri, {
+          bufferCommands: false,
+          maxPoolSize: 10,
+          serverSelectionTimeoutMS: 10000,
+          socketTimeoutMS: 45000,
+        });
+        
+        cachedConnection = conn;
+        connectionPromise = null;
+        return conn;
+      } catch (error) {
+        console.error(`MongoDB connection attempt ${attempt}/${retries} failed:`, error);
+        
+        if (attempt === retries) {
+          connectionPromise = null;
+          throw new Error(`MongoDB connection failed after ${retries} attempts`);
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt), 10000)));
+      }
+    }
+    throw new Error('MongoDB connection failed');
+  })();
+
+  return connectionPromise;
 };
 
 // News Interface

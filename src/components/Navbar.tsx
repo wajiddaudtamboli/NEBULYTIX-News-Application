@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
-import { Menu, X, Bookmark, Home, LogIn, Sparkles, Settings, LogOut, User, Shield } from 'lucide-react'
+import { Menu, X, Bookmark, Home, LogIn, Sparkles, LogOut, User, Shield } from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
 import { Button } from './ui/button'
 import { Link, useLocation } from 'react-router-dom'
@@ -14,6 +14,7 @@ import {
 } from './ui/dropdown-menu'
 import LanguageSelector from './LanguageSelector'
 import { useLanguage } from '@/lib/LanguageContext'
+import { getAdminToken } from '@/lib/api'
 
 interface NavbarProps {
   theme: 'light' | 'dark'
@@ -24,6 +25,8 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [hidden, setHidden] = useState(false)
   const [lastScrollY, setLastScrollY] = useState(0)
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const location = useLocation()
   const { isSignedIn, user } = useUser()
   const { signOut } = useClerk()
@@ -40,11 +43,21 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
 
   const isActive = (path: string) => location.pathname === path
 
-  // Hide/show navbar on scroll
+  // Check if user is admin
+  useEffect(() => {
+    const adminToken = getAdminToken()
+    setIsAdmin(!!adminToken)
+  }, [location])
+
+  // Hide/show navbar on scroll with improved UX
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
       
+      // Add scrolled state for enhanced styling
+      setIsScrolled(currentScrollY > 50)
+      
+      // Hide navbar on scroll down, show on scroll up
       if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setHidden(true)
       } else {
@@ -80,14 +93,22 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
         }}
       >
         <motion.div 
-          className="relative rounded-2xl border border-border/50 px-4 sm:px-6 py-3 flex items-center justify-between overflow-hidden"
+          className={`relative rounded-2xl border px-4 sm:px-6 py-3 flex items-center justify-between overflow-hidden transition-all duration-300 ${
+            isScrolled 
+              ? 'border-border/60 shadow-lg' 
+              : 'border-border/40'
+          }`}
           style={{
             backgroundColor: `hsl(var(--glass-bg))`,
             backdropFilter: `blur(${blur}px)`,
           }}
         >
-          {/* Background glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5 pointer-events-none" />
+          {/* Background glow effect - enhanced on scroll */}
+          <div className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${
+            isScrolled ? 'opacity-100' : 'opacity-60'
+          }`}>
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5" />
+          </div>
           
           {/* Logo */}
           <Link to="/" className="relative flex items-center gap-3 group">
@@ -140,21 +161,32 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
             ))}
           </div>
 
-          {/* Right section */}
+          {/* Right section - Grouped logically */}
           <div className="relative flex items-center gap-2 sm:gap-3">
-            <LanguageSelector />
-            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+            {/* Settings group: Language + Theme */}
+            <div className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg bg-muted/30">
+              <LanguageSelector />
+              <div className="w-px h-4 bg-border/50" />
+              <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+            </div>
             
-            {/* Admin Button - Always Visible */}
-            <Link to="/admin/login" className="hidden md:block">
+            {/* Mobile: Just icons */}
+            <div className="flex sm:hidden items-center gap-1">
+              <LanguageSelector />
+              <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+            </div>
+            
+            {/* Admin Button - Visible based on admin status */}
+            <Link to={isAdmin ? '/admin' : '/admin/login'} className="hidden md:block">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button 
                   variant={location.pathname.startsWith('/admin') ? 'default' : 'outline'} 
                   size="sm" 
-                  className="gap-2"
+                  className={`gap-2 ${isAdmin ? 'border-primary/50' : ''}`}
+                  aria-label={t('nav.admin')}
                 >
                   <Shield className="h-4 w-4" />
-                  {t('nav.admin')}
+                  <span className="hidden lg:inline">{t('nav.admin')}</span>
                 </Button>
               </motion.div>
             </Link>
@@ -165,18 +197,20 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
+                    className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50 hover:bg-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    aria-label="User menu"
                   >
                     {user.imageUrl ? (
                       <img 
                         src={user.imageUrl} 
                         alt={user.fullName || 'User'} 
-                        className="h-7 w-7 rounded-full object-cover"
+                        className="h-7 w-7 rounded-full object-cover ring-2 ring-primary/20"
+                        loading="lazy"
                       />
                     ) : (
                       <User className="h-5 w-5" />
                     )}
-                    <span className="text-sm font-medium max-w-[100px] truncate">
+                    <span className="text-sm font-medium max-w-[100px] truncate hidden lg:inline">
                       {user.firstName || user.emailAddresses[0]?.emailAddress?.split('@')[0]}
                     </span>
                   </motion.button>
@@ -191,7 +225,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={() => signOut()}
-                    className="text-red-600 cursor-pointer"
+                    className="text-red-600 cursor-pointer focus:text-red-600"
                   >
                     <LogOut className="h-4 w-4 mr-2" />
                     {t('nav.logout')}
@@ -203,7 +237,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button variant="hero" size="sm" className="gap-2 btn-depth">
                     <LogIn className="h-4 w-4" />
-                    {t('nav.login')}
+                    <span className="hidden lg:inline">{t('nav.login')}</span>
                   </Button>
                 </motion.div>
               </Link>
@@ -214,8 +248,9 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
               onClick={() => setMobileOpen(!mobileOpen)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="md:hidden p-2.5 rounded-xl bg-muted/50 hover:bg-muted transition-colors focus-visible:ring-2 focus-visible:ring-primary"
-              aria-label="Toggle menu"
+              className="md:hidden p-2.5 rounded-xl bg-muted/50 hover:bg-muted transition-colors focus-visible:ring-2 focus-visible:ring-primary focus:outline-none"
+              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileOpen}
             >
               <AnimatePresence mode="wait">
                 {mobileOpen ? (
@@ -280,23 +315,36 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
                   transition={{ delay: 0.2 }}
                   className="pt-2 border-t border-border/50 space-y-2"
                 >
-                  {/* Admin Button - Always Visible in Mobile */}
-                  <Link to="/admin/login">
+                  {/* Admin Button - Smart visibility in Mobile */}
+                  <Link to={isAdmin ? '/admin' : '/admin/login'}>
                     <Button 
                       variant={location.pathname.startsWith('/admin') ? 'default' : 'outline'} 
-                      className="w-full gap-2 h-12"
+                      className={`w-full gap-2 h-12 ${isAdmin ? 'border-primary/50' : ''}`}
                     >
                       <Shield className="h-5 w-5" />
-                      {t('nav.admin')}
+                      {isAdmin ? t('admin.dashboard') : t('nav.admin')}
                     </Button>
                   </Link>
                   
-                  <Link to="/login">
-                    <Button variant="hero" className="w-full gap-2 h-12">
-                      <LogIn className="h-5 w-5" />
-                      {t('nav.login')}
+                  {!isSignedIn && (
+                    <Link to="/login">
+                      <Button variant="hero" className="w-full gap-2 h-12">
+                        <LogIn className="h-5 w-5" />
+                        {t('nav.login')}
+                      </Button>
+                    </Link>
+                  )}
+                  
+                  {isSignedIn && (
+                    <Button 
+                      variant="ghost" 
+                      className="w-full gap-2 h-12 text-red-600 hover:text-red-600 hover:bg-red-600/10"
+                      onClick={() => signOut()}
+                    >
+                      <LogOut className="h-5 w-5" />
+                      {t('nav.logout')}
                     </Button>
-                  </Link>
+                  )}
                 </motion.div>
               </div>
             </motion.div>

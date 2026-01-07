@@ -1,23 +1,76 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import mongoose, { Model, Document } from 'mongoose';
+import jwt from 'jsonwebtoken';
 
-// MongoDB Connection Cache
-let isConnected = false;
+// MongoDB Connection Cache for serverless
+let cachedConnection: typeof mongoose | null = null;
+let connectionPromise: Promise<typeof mongoose> | null = null;
 
-const connectDB = async () => {
-  if (isConnected) return;
+const connectDB = async (retries = 3): Promise<typeof mongoose> => {
+  // Return cached connection if available and connected
+  if (cachedConnection && mongoose.connection.readyState === 1) {
+    return cachedConnection;
+  }
+  
+  // Return existing connection promise if one is in progress
+  if (connectionPromise) {
+    return connectionPromise;
+  }
   
   const mongoUri = process.env.MONGODB_URI;
   if (!mongoUri) {
-    throw new Error('MONGODB_URI is not set');
+    throw new Error('MONGODB_URI environment variable is not set. Please configure it in Vercel dashboard.');
   }
 
+  connectionPromise = (async () => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        mongoose.set('bufferCommands', false);
+        mongoose.set('strictQuery', true);
+        
+        const conn = await mongoose.connect(mongoUri, {
+          bufferCommands: false,
+          maxPoolSize: 10,
+          serverSelectionTimeoutMS: 10000,
+          socketTimeoutMS: 45000,
+        });
+        
+        cachedConnection = conn;
+        connectionPromise = null;
+        console.log(`MongoDB connected successfully (attempt ${attempt})`);
+        return conn;
+      } catch (error) {
+        console.error(`MongoDB connection attempt ${attempt}/${retries} failed:`, error);
+        
+        if (attempt === retries) {
+          connectionPromise = null;
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          throw new Error(`MongoDB connection failed after ${retries} attempts: ${errorMessage}`);
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt), 10000)));
+      }
+    }
+    throw new Error('MongoDB connection failed');
+  })();
+
+  return connectionPromise;
+};
+
+// JWT Secret
+const JWT_SECRET = process.env.JWT_SECRET || 'nebulytix-jwt-secret-change-in-production';
+
+// Verify JWT token middleware helper
+const verifyToken = (authHeader: string | undefined): { id: string; email: string; role: string } | null => {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+  
   try {
-    await mongoose.connect(mongoUri);
-    isConnected = true;
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    throw error;
+    const token = authHeader.split(' ')[1];
+    return jwt.verify(token, JWT_SECRET) as { id: string; email: string; role: string };
+  } catch {
+    return null;
   }
 };
 
@@ -227,6 +280,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end();
   }
 
+  // Verify admin authentication for protected routes
+  const decoded = verifyToken(req.headers.authorization);
+  if (!decoded) {
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Unauthorized - Valid admin token required' 
+    });
+  }
+
   try {
     await connectDB();
 
@@ -250,19 +312,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return handleCreate(req, res);
 
       case 'PUT':
-        if (!id) return res.status(400).json({ error: 'News ID required' });
+        if (!id) return res.status(400).json({ success: false, error: 'News ID required' });
         return handleUpdate(req, res, id);
 
       case 'DELETE':
-        if (!id) return res.status(400).json({ error: 'News ID required' });
+        if (!id) return res.status(400).json({ success: false, error: 'News ID required' });
         return handleDelete(res, id);
 
       case 'PATCH':
-        if (!id) return res.status(400).json({ error: 'News ID required' });
+        if (!id) return res.status(400).json({ success: false, error: 'News ID required' });
         return handleToggle(res, id, action);
 
       default:
-        return res.status(405).json({ error: 'Method not allowed' });
+        return res.status(405).json({ success: false, error: 'Method not allowed' });
     }
   } catch (error) {
     console.error('Admin news error:', error);
