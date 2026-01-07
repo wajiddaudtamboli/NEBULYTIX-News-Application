@@ -318,7 +318,7 @@ export function clearAdminToken(): void {
 
 export async function adminLogin(email: string, password: string) {
   try {
-    const response = await fetch(`${API_URL}/v1/auth/admin/login`, {
+    const response = await fetch(`${API_URL}/auth/admin/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -341,7 +341,7 @@ export async function verifyAdminToken() {
   if (!token) return { success: false, message: 'No token' }
   
   try {
-    const response = await fetch(`${API_URL}/v1/auth/admin/verify`, {
+    const response = await fetch(`${API_URL}/auth/admin/verify`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -355,7 +355,7 @@ export async function verifyAdminToken() {
 
 export async function adminSetup(email: string, password: string, name: string, setupKey: string) {
   try {
-    const response = await fetch(`${API_URL}/v1/auth/admin/setup`, {
+    const response = await fetch(`${API_URL}/auth/admin/setup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, name, setupKey }),

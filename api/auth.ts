@@ -47,7 +47,7 @@ const adminSchema = new mongoose.Schema({
 const Admin = (mongoose.models.AuthAdmin || mongoose.model<IAdmin>('AuthAdmin', adminSchema, 'admins')) as Model<IAdmin>;
 
 const JWT_SECRET = process.env.JWT_SECRET || 'nebulytix-jwt-secret-change-in-production';
-const SETUP_KEY = process.env.ADMIN_SETUP_KEY || 'nebulytix-admin-setup-2024';
+const SETUP_KEY = process.env.ADMIN_SETUP_KEY || 'nebulytix-setup-2024';
 
 // Set CORS headers
 const setCorsHeaders = (res: VercelResponse) => {
@@ -99,12 +99,14 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
   res.json({
     success: true,
     message: 'Login successful',
-    token,
-    admin: {
-      id: admin._id,
-      email: admin.email,
-      name: admin.name,
-      role: admin.role,
+    data: {
+      token,
+      admin: {
+        id: admin._id,
+        email: admin.email,
+        name: admin.name,
+        role: admin.role,
+      },
     },
   });
 }
@@ -162,12 +164,14 @@ async function handleSetup(req: VercelRequest, res: VercelResponse) {
   res.status(201).json({
     success: true,
     message: 'Admin created successfully',
-    token,
-    admin: {
-      id: admin._id,
-      email: admin.email,
-      name: admin.name,
-      role: admin.role,
+    data: {
+      token,
+      admin: {
+        id: admin._id,
+        email: admin.email,
+        name: admin.name,
+        role: admin.role,
+      },
     },
   });
 }
@@ -192,11 +196,13 @@ async function handleVerify(req: VercelRequest, res: VercelResponse) {
 
     res.json({
       success: true,
-      admin: {
-        id: admin._id,
-        email: admin.email,
-        name: admin.name,
-        role: admin.role,
+      data: {
+        admin: {
+          id: admin._id,
+          email: admin.email,
+          name: admin.name,
+          role: admin.role,
+        },
       },
     });
   } catch {
