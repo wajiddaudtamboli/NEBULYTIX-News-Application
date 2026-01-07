@@ -1,5 +1,14 @@
-// API configuration
-const API_URL = import.meta.env.VITE_API_URL || '/api/v1'
+// API configuration - use relative URL in production, allow override for development
+const getApiUrl = () => {
+  // In production (Vercel), always use relative path
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return '/api/v1'
+  }
+  // In development, use env variable or default to localhost
+  return import.meta.env.VITE_API_URL || '/api/v1'
+}
+
+const API_URL = getApiUrl()
 
 // Mock data for offline/fallback mode
 const MOCK_NEWS = [
