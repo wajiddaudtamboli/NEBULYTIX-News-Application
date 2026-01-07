@@ -92,13 +92,14 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
           {/* Logo */}
           <Link to="/" className="relative flex items-center gap-3 group">
             <motion.div 
-              className="relative h-10 w-10 rounded-xl bg-gradient-to-br from-primary via-primary to-accent flex items-center justify-center shadow-glow-sm overflow-hidden"
+              className="relative h-10 w-10 rounded-xl shadow-glow-sm overflow-hidden"
               whileHover={{ scale: 1.05, rotate: 5 }}
               whileTap={{ scale: 0.95 }}
             >
-              <span className="text-primary-foreground font-display font-bold text-lg relative z-10">N</span>
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-tr from-accent to-primary opacity-0 group-hover:opacity-100 transition-opacity"
+              <img 
+                src="https://drive.google.com/uc?export=view&id=1gB3bPG_ri6vfMqY5eOWR2HKqG486HzVT" 
+                alt="Nebulytix Logo"
+                className="h-full w-full object-cover"
               />
             </motion.div>
             <div className="hidden sm:block">
