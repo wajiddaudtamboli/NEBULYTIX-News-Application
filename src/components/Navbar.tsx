@@ -97,7 +97,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
               whileTap={{ scale: 0.95 }}
             >
               <img 
-                src="https://res.cloudinary.com/duhhsnbwh/image/upload/v1767754134/Logo-removebg-preview_v6ncki.png" 
+                src="https://res.cloudinary.com/duhhsnbwh/image/upload/v1767754727/WhatsApp_Image_2026-01-06_at_1.58.30_PM_gsijk5.jpg" 
                 alt="Nebulytix Logo"
                 className="h-full w-full object-cover"
               />

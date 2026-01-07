@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { Linkedin, Mail, MapPin, Globe, Building2 } from 'lucide-react'
 import { useLanguage } from '@/lib/LanguageContext'
 
-const LOGO_URL = 'https://res.cloudinary.com/duhhsnbwh/image/upload/v1767754134/Logo-removebg-preview_v6ncki.png'
+const LOGO_URL = 'https://res.cloudinary.com/duhhsnbwh/image/upload/v1767754727/WhatsApp_Image_2026-01-06_at_1.58.30_PM_gsijk5.jpg'
 
 export function Footer() {
   const { t } = useLanguage()
