@@ -103,7 +103,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     await connectDB();
 
-    const { id, category, date, page = '1', limit = '12' } = req.query;
+    const { id, category, date, page = '1', limit = '12', type } = req.query;
+
+    // Handle featured news
+    if (type === 'featured') {
+      const featured = await News.find({ isFeatured: true })
+        .sort({ publishedAt: -1 })
+        .limit(10)
+        .lean();
+      return res.status(200).json({ success: true, data: featured });
+    }
+
+    // Handle trending news
+    if (type === 'trending') {
+      const trending = await News.find({ isTrending: true })
+        .sort({ views: -1, publishedAt: -1 })
+        .limit(10)
+        .lean();
+      return res.status(200).json({ success: true, data: trending });
+    }
 
     // If ID is provided, return single news item with view increment
     if (id && typeof id === 'string') {

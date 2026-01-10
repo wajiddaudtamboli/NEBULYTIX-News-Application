@@ -117,11 +117,11 @@
     },
     {
       "source": "/api/v1/news/featured",
-      "destination": "/api/featured"
+      "destination": "/api/news?type=featured"
     },
     {
       "source": "/api/v1/news/trending",
-      "destination": "/api/trending"
+      "destination": "/api/news?type=trending"
     },
     {
       "source": "/api/v1/news/:id",
