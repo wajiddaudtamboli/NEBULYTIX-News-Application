@@ -310,6 +310,154 @@ export async function fetchCategories(): Promise<{ success: boolean; data: strin
   }
 }
 
+// ============================================
+// External News API (GNews - Free tier: 100 req/day)
+// Get your free API key at: https://gnews.io/
+// ============================================
+
+// Available news categories from GNews API
+export const EXTERNAL_NEWS_CATEGORIES = [
+  'general',
+  'world',
+  'nation',
+  'business',
+  'technology',
+  'entertainment',
+  'sports',
+  'science',
+  'health'
+] as const;
+
+export type ExternalNewsCategory = typeof EXTERNAL_NEWS_CATEGORIES[number];
+
+export interface ExternalNewsItem extends NewsItem {
+  externalLink?: string;
+}
+
+export interface ExternalNewsResponse {
+  success: boolean;
+  data: ExternalNewsItem[];
+  category?: string;
+  total?: number;
+  error?: string;
+  filters?: {
+    from: string | null;
+    to: string | null;
+  };
+}
+
+// Fetch news from GNews API by category with optional date filtering
+export async function fetchExternalNews(
+  category: ExternalNewsCategory = 'general',
+  limit: number = 10,
+  fromDate?: string, // Format: YYYY-MM-DD
+  toDate?: string    // Format: YYYY-MM-DD
+): Promise<ExternalNewsResponse> {
+  try {
+    let url = `${API_URL}/external-news?category=${category}&limit=${limit}`;
+    if (fromDate) url += `&from=${fromDate}`;
+    if (toDate) url += `&to=${toDate}`;
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.success && data.data) {
+      return { ...data, data: normalizeNews(data.data) };
+    }
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch external news:', error);
+    return { success: false, data: [], error: 'Failed to fetch external news' };
+  }
+}
+
+// Fetch headlines from multiple external sources
+export async function fetchExternalHeadlines(limit: number = 10): Promise<ExternalNewsResponse> {
+  try {
+    const response = await fetch(
+      `${API_URL}/external-news?type=headlines&limit=${limit}`
+    );
+    const data = await response.json();
+    
+    if (data.success && data.data) {
+      return { ...data, data: normalizeNews(data.data) };
+    }
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch headlines:', error);
+    return { success: false, data: [], error: 'Failed to fetch headlines' };
+  }
+}
+
+// Fetch featured news from external sources
+export async function fetchExternalFeaturedNews(): Promise<ExternalNewsResponse> {
+  try {
+    const response = await fetch(`${API_URL}/external-news?type=featured`);
+    const data = await response.json();
+    
+    if (data.success && data.data) {
+      return { ...data, data: normalizeNews(data.data) };
+    }
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch external featured news:', error);
+    return { success: false, data: [], error: 'Failed to fetch featured news' };
+  }
+}
+
+// Fetch trending news from external sources
+export async function fetchExternalTrendingNews(): Promise<ExternalNewsResponse> {
+  try {
+    const response = await fetch(`${API_URL}/external-news?type=trending`);
+    const data = await response.json();
+    
+    if (data.success && data.data) {
+      return { ...data, data: normalizeNews(data.data) };
+    }
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch external trending news:', error);
+    return { success: false, data: [], error: 'Failed to fetch trending news' };
+  }
+}
+
+// Get list of available news categories
+export async function fetchExternalNewsCategories(): Promise<{ success: boolean; data: string[] }> {
+  try {
+    const response = await fetch(`${API_URL}/external-news?type=categories`);
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch external news categories:', error);
+    return { success: false, data: EXTERNAL_NEWS_CATEGORIES as unknown as string[] };
+  }
+}
+
+// Search external news with optional date filtering
+export async function searchExternalNews(
+  query: string,
+  limit: number = 10,
+  fromDate?: string, // Format: YYYY-MM-DD
+  toDate?: string    // Format: YYYY-MM-DD
+): Promise<ExternalNewsResponse> {
+  try {
+    let url = `${API_URL}/external-news/search?q=${encodeURIComponent(query)}&limit=${limit}`;
+    if (fromDate) url += `&from=${fromDate}`;
+    if (toDate) url += `&to=${toDate}`;
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.success && data.data) {
+      return { ...data, data: normalizeNews(data.data) };
+    }
+    return data;
+  } catch (error) {
+    console.error('Failed to search external news:', error);
+    return { success: false, data: [], error: 'Failed to search news' };
+  }
+}
+
 // Admin API functions
 const ADMIN_TOKEN_KEY = 'nebulytix_admin_token'
 

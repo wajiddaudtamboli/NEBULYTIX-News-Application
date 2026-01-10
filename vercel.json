@@ -76,6 +76,34 @@
       "destination": "/api/settings"
     },
     {
+      "source": "/api/v1/external-news/headlines",
+      "destination": "/api/external-news?type=headlines"
+    },
+    {
+      "source": "/api/v1/external-news/featured",
+      "destination": "/api/external-news?type=featured"
+    },
+    {
+      "source": "/api/v1/external-news/trending",
+      "destination": "/api/external-news?type=trending"
+    },
+    {
+      "source": "/api/v1/external-news/search",
+      "destination": "/api/external-news?type=search"
+    },
+    {
+      "source": "/api/v1/external-news/categories",
+      "destination": "/api/external-news?type=categories"
+    },
+    {
+      "source": "/api/v1/external-news/sources",
+      "destination": "/api/external-news?type=sources"
+    },
+    {
+      "source": "/api/v1/external-news",
+      "destination": "/api/external-news"
+    },
+    {
       "source": "/api/v1/auth/admin/login",
       "destination": "/api/auth?action=login"
     },

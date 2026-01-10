@@ -131,9 +131,11 @@ import blogRoutes from './routes/blogs.js';
 import pageRoutes from './routes/pages.js';
 import enquiryRoutes from './routes/enquiries.js';
 import mediaRoutes from './routes/media.js';
+import externalNewsRoutes from './routes/external-news.js';
 
 // API v1 routes
 app.use('/api/v1/news', newsRoutes);
+app.use('/api/v1/external-news', externalNewsRoutes);
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/auth', authRoutes);
@@ -146,6 +148,7 @@ app.use('/api/v1/media', mediaRoutes);
 
 // Legacy routes (backward compatibility)
 app.use('/api/news', newsRoutes);
+app.use('/api/external-news', externalNewsRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/categories', categoryRoutes);
