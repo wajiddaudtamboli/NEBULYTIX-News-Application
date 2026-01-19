@@ -192,10 +192,10 @@ export function NewsGlobe() {
   }
 
   return (
-    <div className="absolute inset-0 opacity-75 pointer-events-none globe-container">
+    <div className="absolute inset-0 opacity-20 sm:opacity-25 md:opacity-35 pointer-events-none globe-container scale-50 sm:scale-65 md:scale-75 lg:scale-85 translate-y-10 sm:translate-y-5 md:translate-y-0">
       <Suspense fallback={<GlobeLoader />}>
         <Canvas
-          camera={{ position: [0, 0, 7], fov: 45 }}
+          camera={{ position: [0, 0, 10], fov: 35 }}
           dpr={isLowEnd ? [1, 1.5] : [1, 2]}
           gl={{ 
             antialias: !isLowEnd, 
@@ -204,13 +204,13 @@ export function NewsGlobe() {
           }}
           frameloop={isLowEnd ? 'demand' : 'always'}
         >
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[10, 10, 5]} intensity={1} />
-          <pointLight position={[-10, -10, -5]} color="#a855f7" intensity={0.5} />
+          <ambientLight intensity={0.4} />
+          <directionalLight position={[10, 10, 5]} intensity={0.8} />
+          <pointLight position={[-10, -10, -5]} color="#a855f7" intensity={0.3} />
           
           <GlobeCore isLowEnd={isLowEnd} />
           <Particles isLowEnd={isLowEnd} />
-          <Stars radius={50} depth={50} count={isLowEnd ? 500 : 1000} factor={4} fade speed={isLowEnd ? 0.5 : 1} />
+          <Stars radius={50} depth={50} count={isLowEnd ? 300 : 600} factor={3} fade speed={isLowEnd ? 0.3 : 0.6} />
         </Canvas>
       </Suspense>
     </div>

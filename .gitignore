@@ -32,3 +32,8 @@ server/.env
 
 # Vercel
 .vercel
+
+# Compiled API files
+api/*.js
+api/*.d.ts
+api/*.d.ts.map

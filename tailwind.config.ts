@@ -19,6 +19,7 @@ export default {
     },
     extend: {
       fontFamily: {
+        headline: ["Playfair Display", "Georgia", "serif"],
         display: ["Space Grotesk", "sans-serif"],
         body: ["Inter", "sans-serif"],
       },
@@ -28,6 +29,19 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        // News-specific semantic colors
+        breaking: {
+          DEFAULT: "hsl(var(--breaking))",
+          foreground: "hsl(var(--breaking-foreground))",
+        },
+        live: {
+          DEFAULT: "hsl(var(--live))",
+          foreground: "hsl(var(--live-foreground))",
+        },
+        trending: {
+          DEFAULT: "hsl(var(--trending))",
+          foreground: "hsl(var(--trending-foreground))",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
-import { Linkedin, Mail, MapPin, Globe, Building2, Phone, Instagram, Twitter, Zap, Earth, Smartphone, ShieldCheck, Newspaper, Cpu } from 'lucide-react'
+import { Linkedin, Mail, MapPin, Globe, Building2, Phone, Instagram, Twitter, Zap, Earth, Smartphone, ShieldCheck, Newspaper, Cpu, Send, Radio } from 'lucide-react'
 import { useLanguage } from '@/lib/LanguageContext'
+import { useState } from 'react'
 
 const LOGO_URL = 'https://res.cloudinary.com/duhhsnbwh/image/upload/v1767754727/WhatsApp_Image_2026-01-06_at_1.58.30_PM_gsijk5.jpg'
 
@@ -20,6 +21,14 @@ const COMPANY_INFO = {
 export function Footer() {
   const { t } = useLanguage()
   const year = new Date().getFullYear()
+  const [email, setEmail] = useState('')
+
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // TODO: Implement newsletter subscription
+    setEmail('')
+    alert('Thank you for subscribing!')
+  }
 
   const socialLinks = [
     { 
@@ -137,14 +146,14 @@ export function Footer() {
       {/* Decorative top gradient line */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
       
-      <div className="content-container py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Left: Branding */}
-          <div className="flex flex-col items-center md:items-start gap-4">
+      <div className="content-container py-12 sm:py-14">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
+          {/* Column 1: Branding */}
+          <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
               <motion.div 
-                whileHover={{ rotate: 10, scale: 1.05 }}
-                className="h-12 w-12 rounded-xl overflow-hidden shadow-glow-sm"
+                whileHover={{ scale: 1.05 }}
+                className="h-14 w-14 rounded-xl overflow-hidden shadow-lg border-2 border-primary/20"
               >
                 <img 
                   src={LOGO_URL} 
@@ -153,26 +162,57 @@ export function Footer() {
                 />
               </motion.div>
               <div>
-                <span className="font-display font-bold text-xl block">NEBULYTIX</span>
-                <span className="text-xs text-muted-foreground">News Platform</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-headline font-bold text-xl tracking-tight">NEBULYTIX</span>
+                  <span className="live-badge text-[9px] py-0.5 px-1.5 rounded-sm">
+                    <Radio className="h-2.5 w-2.5" />
+                    LIVE
+                  </span>
+                </div>
+                <span className="text-xs text-primary font-semibold tracking-wide uppercase">NEWS PLATFORM</span>
               </div>
             </div>
             
-            <p className="text-sm text-muted-foreground text-center md:text-left max-w-xs">
-              {t('footer.tagline')}
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Your gateway to the stories that shape our world. Stay informed, stay ahead.
             </p>
 
             {/* Company Info */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Building2 className="h-4 w-4 text-primary" />
-              <span>{COMPANY_INFO.name}</span>
+              <span className="font-medium">{COMPANY_INFO.name}</span>
             </div>
           </div>
 
-          {/* Center: Contact Info */}
-          <div className="flex flex-col items-center gap-4">
-            <h4 className="font-semibold text-foreground">Contact Us</h4>
-            <div className="flex flex-col items-center gap-3">
+          {/* Column 2: Stay Informed - Newsletter */}
+          <div className="flex flex-col gap-3">
+            <h4 className="font-headline font-bold text-lg text-foreground">Stay Informed</h4>
+            <p className="text-sm text-muted-foreground">
+              Get breaking news alerts delivered straight to your inbox
+            </p>
+            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 mt-2">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                required
+                className="flex-1 min-w-0 px-4 py-3 rounded-lg border border-border bg-background text-base focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+              />
+              <button
+                type="submit"
+                className="btn-news-primary px-6 py-3 rounded-lg shrink-0 text-base font-semibold"
+              >
+                <Send className="h-4 w-4" />
+                <span>Subscribe</span>
+              </button>
+            </form>
+          </div>
+
+          {/* Column 3: Contact */}
+          <div className="flex flex-col gap-3">
+            <h4 className="font-headline font-bold text-lg text-foreground">Contact</h4>
+            <div className="flex flex-col gap-3">
               {contactInfo.map((item) => (
                 <motion.a
                   key={item.label}
@@ -180,22 +220,22 @@ export function Footer() {
                   target={item.label === 'Location' ? '_blank' : undefined}
                   rel={item.label === 'Location' ? 'noopener noreferrer' : undefined}
                   whileHover={{ x: 4 }}
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary transition-colors group"
                 >
-                  <item.icon className="h-4 w-4" />
+                  <item.icon className="h-4 w-4 text-primary/70 group-hover:text-primary transition-colors" />
                   <span>{item.value}</span>
                 </motion.a>
               ))}
             </div>
             
             {/* Quick Links */}
-            <div className="flex flex-wrap justify-center gap-4 mt-2">
+            <div className="flex flex-wrap gap-4 mt-3 pt-3 border-t border-border/30">
               {footerLinks.map((link) => (
                 <motion.a
                   key={link.label}
                   href={link.href}
                   whileHover={{ y: -2 }}
-                  className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   {link.label}
                 </motion.a>
@@ -203,10 +243,10 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Right: Social links */}
-          <div className="flex flex-col items-center md:items-end gap-4">
-            <h4 className="font-semibold text-foreground">Follow Us</h4>
-            <div className="flex items-center gap-2 flex-wrap justify-center md:justify-end">
+          {/* Column 4: Follow Us */}
+          <div className="flex flex-col gap-3">
+            <h4 className="font-headline font-bold text-lg text-foreground">Follow Us</h4>
+            <div className="flex items-center gap-2 flex-wrap">
               {socialLinks.map((link) => (
                 <motion.a
                   key={link.label}
@@ -215,7 +255,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   whileHover={{ y: -3, scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  className={`p-2.5 rounded-xl bg-muted/50 text-muted-foreground ${link.color} hover:bg-muted transition-all`}
+                  className={`p-2.5 rounded-lg bg-muted/50 text-muted-foreground ${link.color} hover:bg-muted transition-all border border-border/30`}
                   aria-label={link.label}
                   title={link.label}
                 >
@@ -231,7 +271,7 @@ export function Footer() {
               rel="noopener noreferrer"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="mt-2 px-4 py-2 rounded-lg bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors flex items-center gap-2"
+              className="mt-2 px-4 py-2.5 rounded-lg border-2 border-primary text-primary text-sm font-semibold hover:bg-primary hover:text-primary-foreground transition-all flex items-center gap-2 w-fit"
             >
               <Globe className="h-4 w-4" />
               Visit Official Website
@@ -240,13 +280,13 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-10 pt-6 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground text-center sm:text-left">
-            © {year} {COMPANY_INFO.name} {t('footer.allRightsReserved')}
+        <div className="mt-10 pt-8 border-t border-border/50 flex flex-col md:flex-row items-center justify-between gap-6">
+          <p className="text-sm text-muted-foreground text-center md:text-left">
+            © {year} {COMPANY_INFO.name}. All rights reserved.
           </p>
           
-          <p className="text-sm text-muted-foreground text-center sm:text-right">
-            Developer - <span className="font-medium text-primary">Wajid Daud Tamboli</span> - 9667033839
+          <p className="text-sm text-muted-foreground text-center md:text-right">
+            Developer - <a href="tel:9667033839" className="font-semibold text-primary hover:underline">Wajid Daud Tamboli</a> - 9667033839
           </p>
         </div>
       </div>

@@ -113,8 +113,8 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
           {/* Logo */}
           <Link to="/" className="relative flex items-center gap-3 group">
             <motion.div 
-              className="relative h-10 w-10 rounded-xl shadow-glow-sm overflow-hidden"
-              whileHover={{ scale: 1.05, rotate: 5 }}
+              className="relative h-10 w-10 rounded-lg shadow-glow-sm overflow-hidden"
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               <img 
@@ -124,12 +124,17 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
               />
             </motion.div>
             <div className="hidden sm:block">
-              <span className="font-display font-bold text-xl text-foreground">
-                NEBULYTIX
-              </span>
-              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                <Sparkles className="h-2.5 w-2.5 text-primary" />
-                <span>News Platform</span>
+              <div className="flex items-center gap-2">
+                <span className="font-headline font-bold text-xl text-foreground tracking-tight">
+                  NEBULYTIX
+                </span>
+                <span className="live-badge text-[9px] py-0.5 px-1.5">
+                  <span className="live-dot scale-75" />
+                  LIVE
+                </span>
+              </div>
+              <div className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase">
+                Breaking News • Real-Time
               </div>
             </div>
           </Link>

@@ -5,12 +5,16 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  define: {
+    'process.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL),
+    'process.env.VITE_CLERK_PUBLISHABLE_KEY': JSON.stringify(process.env.VITE_CLERK_PUBLISHABLE_KEY),
+  },
   server: {
     host: "::",
     port: 8080,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: process.env.VITE_API_URL || 'http://localhost:5001',
         changeOrigin: true,
         secure: false,
       },
