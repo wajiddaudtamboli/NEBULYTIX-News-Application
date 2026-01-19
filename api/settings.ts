@@ -149,7 +149,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!settings) {
         const newSettings = new Settings(DEFAULT_SETTINGS);
         await newSettings.save();
-        settings = newSettings.toObject();
+        settings = newSettings.toObject() as any;
       }
 
       return res.status(200).json({ success: true, data: settings });

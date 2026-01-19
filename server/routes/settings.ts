@@ -14,7 +14,7 @@ router.get('/', async (req: Request, res: Response) => {
     if (!settings) {
       const defaultSettings = new SiteSettings();
       await defaultSettings.save();
-      settings = defaultSettings.toObject();
+      settings = defaultSettings.toObject() as any;
     }
     
     res.json({ success: true, data: settings });
@@ -59,7 +59,7 @@ router.get('/home', async (req: Request, res: Response) => {
     if (!homeContent) {
       const defaultContent = new HomeContent();
       await defaultContent.save();
-      homeContent = defaultContent.toObject();
+      homeContent = defaultContent.toObject() as any;
     }
     
     res.json({ success: true, data: homeContent });

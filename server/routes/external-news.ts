@@ -143,7 +143,7 @@ const fetchFromGNews = async (
     throw new Error(`News API request failed: ${response.status}`);
   }
 
-  const data = await response.json();
+  const data = await response.json() as { articles?: GNewsArticle[] };
   return data.articles || [];
 };
 
@@ -176,7 +176,7 @@ const searchFromGNews = async (
     throw new Error(`Search API request failed: ${response.status}`);
   }
 
-  const data = await response.json();
+  const data = await response.json() as { articles?: GNewsArticle[] };
   return data.articles || [];
 };
 
