@@ -141,7 +141,7 @@ export function NewsCard({ news, index, onSave, isSaved = false, featured = fals
             className="absolute top-4 left-32 z-10"
           >
             <span className="px-2 py-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-medium flex items-center gap-1">
-              🔥 {t('article.trending')}
+              <Sparkles className="w-3 h-3" /> {t('article.trending')}
             </span>
           </motion.div>
         )}

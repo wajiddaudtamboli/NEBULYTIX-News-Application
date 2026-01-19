@@ -9,7 +9,9 @@ import {
   Clock, 
   Eye,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  Sparkles,
+  Star
 } from 'lucide-react'
 import { useUser } from '@clerk/clerk-react'
 import { Button } from '@/components/ui/button'
@@ -213,11 +215,11 @@ export default function ArticleDetail() {
                 {article.category}
               </Badge>
               {article.isFeatured && (
-                <Badge variant="secondary">⭐ {t('article.featured')}</Badge>
+                <Badge variant="secondary"><Star className="w-3 h-3 mr-1" /> {t('article.featured')}</Badge>
               )}
               {article.isTrending && (
                 <Badge variant="destructive" className="bg-gradient-to-r from-orange-500 to-red-500">
-                  🔥 {t('article.trending')}
+                  <Sparkles className="w-3 h-3 mr-1" /> {t('article.trending')}
                 </Badge>
               )}
             </div>
